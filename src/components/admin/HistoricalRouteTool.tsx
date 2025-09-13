@@ -110,34 +110,33 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                       <DatePicker date={field.value} setDate={field.onChange} placeholder="Pick a start date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <FormControl>
-                       <DatePicker date={field.value} setDate={field.onChange} placeholder="Pick an end date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <div/>
+             <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                     <DatePicker date={field.value} setDate={field.onChange} placeholder="Pick a start date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                     <DatePicker date={field.value} setDate={field.onChange} placeholder="Pick an end date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="liveLocationData"
