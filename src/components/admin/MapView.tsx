@@ -18,6 +18,10 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
     if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
       setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
       setZoom(13);
+    } else {
+      // If no driver is selected, or selected driver has no location, default to Punjab
+      setCenter([31.1471, 75.3412]);
+      setZoom(7);
     }
   }, [selectedDriver]);
 

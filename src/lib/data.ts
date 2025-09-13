@@ -20,41 +20,41 @@ const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 export const drivers: Omit<Driver, 'lastSeen'>[] = [
   {
     id: 'DRI-001',
-    name: 'Alex Ray',
+    name: 'Arjun Kumar',
     avatar: avatarMap.get('driver-1')!,
-    lastLocation: { lat: 34.0522, lng: -118.2437 },
+    lastLocation: { lat: 30.7333, lng: 76.7794 }, // Chandigarh
     status: 'online',
     password: 'password',
   },
   {
     id: 'DRI-002',
-    name: 'Maria Garcia',
+    name: 'Priya Sharma',
     avatar: avatarMap.get('driver-2')!,
-    lastLocation: { lat: 40.7128, lng: -74.0060 },
+    lastLocation: { lat: 31.6340, lng: 74.8723 }, // Amritsar
     status: 'offline',
     password: 'password',
   },
   {
     id: 'DRI-003',
-    name: 'Kenji Tanaka',
+    name: 'Rohan Singh',
     avatar: avatarMap.get('driver-3')!,
-    lastLocation: { lat: 35.6895, lng: 139.6917 },
+    lastLocation: { lat: 30.9010, lng: 75.8573 }, // Ludhiana
     status: 'online',
     password: 'password',
   },
   {
     id: 'DRI-004',
-    name: 'Fatima Al-Fassi',
+    name: 'Ananya Gupta',
     avatar: avatarMap.get('driver-4')!,
-    lastLocation: { lat: 51.5074, lng: -0.1278 },
+    lastLocation: { lat: 30.3752, lng: 76.7821 }, // Patiala
     status: 'inactive',
     password: 'password',
   },
   {
     id: 'DRI-005',
-    name: 'John Smith',
+    name: 'Vikram Mehta',
     avatar: avatarMap.get('driver-5')!,
-    lastLocation: { lat: 48.8566, lng: 2.3522 },
+    lastLocation: { lat: 31.3260, lng: 75.5762 }, // Jalandhar
     status: 'online',
     password: 'password',
   },
