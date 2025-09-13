@@ -30,6 +30,22 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/marker-icon.png',
+        destination: '/_next/static/media/marker-icon.png',
+      },
+       {
+        source: '/marker-icon-2x.png',
+        destination: '/_next/static/media/marker-icon-2x.png',
+      },
+      {
+        source: '/marker-shadow.png',
+        destination: '/_next/static/media/marker-shadow.png',
+      },
+    ]
+  },
 };
 
 export default nextConfig;

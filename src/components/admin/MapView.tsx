@@ -1,13 +1,29 @@
 'use client';
 
-import { APIProvider, Map, Marker, InfoWindow } from '@vis.gl/react-google-maps';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { Driver } from '@/lib/data';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import L from 'leaflet';
 
-const MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+// Fix for default icon not showing in Leaflet
+import 'leaflet/dist/images/marker-shadow.png';
+import 'leaflet/dist/images/marker-icon.png';
+import 'leaflet/dist/images/marker-icon-2x.png';
+
+
+const defaultIcon = L.icon({
+    iconUrl: '/marker-icon.png',
+    iconRetinaUrl: '/marker-icon-2x.png',
+    shadowUrl: '/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28],
+    shadowSize: [41, 41]
+});
 
 type MapViewProps = {
   drivers: Driver[];
@@ -15,61 +31,49 @@ type MapViewProps = {
 };
 
 export function MapView({ drivers, selectedDriver }: MapViewProps) {
-  const [infoWindowDriver, setInfoWindowDriver] = useState<Driver | null>(null);
+  const [map, setMap] = useState<L.Map | null>(null);
 
-  if (!MAPS_API_KEY) {
-    return (
-      <Alert>
-        <Terminal className="h-4 w-4" />
-        <AlertTitle>Map Unavailable</AlertTitle>
-        <AlertDescription>
-          The Google Maps API Key is not configured. Please add it to your environment variables as `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to enable the map view.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  const center = selectedDriver
-    ? selectedDriver.lastLocation
-    : { lat: 39.8283, lng: -98.5795 };
+  const center: L.LatLngTuple = selectedDriver
+    ? [selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]
+    : [39.8283, -98.5795];
   
   const zoom = selectedDriver ? 12 : 4;
 
+  useEffect(() => {
+    if (map && selectedDriver) {
+      map.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 12);
+    }
+  }, [selectedDriver, map]);
+
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border">
-      <APIProvider apiKey={MAPS_API_KEY}>
-        <Map
-          defaultCenter={center}
-          defaultZoom={zoom}
-          center={center}
-          zoom={zoom}
-          gestureHandling={'greedy'}
-          disableDefaultUI={true}
-          mapId="swifttrack-map"
-        >
-          {drivers.map(driver => (
-            <Marker 
-              key={driver.id} 
-              position={driver.lastLocation} 
-              onClick={() => setInfoWindowDriver(driver)}
-            />
-          ))}
-
-          {infoWindowDriver && (
-            <InfoWindow
-              position={infoWindowDriver.lastLocation}
-              onCloseClick={() => setInfoWindowDriver(null)}
-            >
-              <div className="p-2">
-                <h4 className="font-bold">{infoWindowDriver.name}</h4>
-                <p className="text-sm">{infoWindowDriver.id}</p>
-                <p className="text-xs text-muted-foreground">Last seen: {infoWindowDriver.lastSeen}</p>
+      <MapContainer 
+        center={center} 
+        zoom={zoom} 
+        scrollWheelZoom={true} 
+        className="h-full w-full"
+        whenCreated={setMap}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {drivers.map(driver => (
+          <Marker 
+            key={driver.id} 
+            position={[driver.lastLocation.lat, driver.lastLocation.lng]}
+            icon={defaultIcon}
+          >
+            <Popup>
+              <div className="p-0 m-0">
+                <h4 className="font-bold">{driver.name}</h4>
+                <p className="text-sm">{driver.id}</p>
+                <p className="text-xs text-muted-foreground">Last seen: {driver.lastSeen}</p>
               </div>
-            </InfoWindow>
-          )}
-
-        </Map>
-      </APIProvider>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 }
