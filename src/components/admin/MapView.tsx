@@ -37,13 +37,13 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
     ? [selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]
     : [31.1471, 75.3412];
   
-  const zoom = selectedDriver ? 12 : 7;
+  const zoom = selectedDriver ? 13 : 7;
 
   useEffect(() => {
-    if (map && selectedDriver) {
-      map.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 12);
+    if (map && selectedDriver && selectedDriver.lastLocation.lat !== 0) {
+      map.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 13);
     }
-  }, [selectedDriver, map]);
+  }, [selectedDriver, map, selectedDriver?.lastLocation.lat, selectedDriver?.lastLocation.lng]);
 
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border">
@@ -52,13 +52,14 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
         zoom={zoom} 
         scrollWheelZoom={true} 
         className="h-full w-full"
-        whenCreated={setMap}
+        ref={setMap}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {drivers.map(driver => (
+          driver.lastLocation.lat !== 0 &&
           <Marker 
             key={driver.id} 
             position={[driver.lastLocation.lat, driver.lastLocation.lng]}
