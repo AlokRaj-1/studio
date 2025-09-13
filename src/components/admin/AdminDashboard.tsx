@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bot, List, Map as MapIcon, Search, X } from 'lucide-react';
+import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -13,18 +13,21 @@ import {
   SidebarMenuButton,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapView } from './MapView';
 import { HistoricalRouteTool } from './HistoricalRouteTool';
+import { CreateDriverDialog } from './CreateDriverDialog';
 import { type Driver } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Link from 'next/link';
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
@@ -33,6 +36,7 @@ export function AdminDashboard() {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'drivers'));
@@ -57,6 +61,9 @@ export function AdminDashboard() {
         setSelectedDriver(driversData[0] || null);
         setLoading(false);
       }
+    }, (error) => {
+        console.error("Error fetching drivers:", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -67,15 +74,25 @@ export function AdminDashboard() {
     driver.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleDriverCreated = (newDriverId: string) => {
+    const newDriver = drivers.find(d => d.id === newDriverId);
+    if (newDriver) {
+        setSelectedDriver(newDriver);
+    }
+  }
+
   return (
     <SidebarProvider>
       <Sidebar side="left" collapsible="icon">
         <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-            <div className="bg-primary p-2 rounded-lg">
-              <List className="w-6 h-6 text-primary-foreground" />
+          <div className="flex items-center justify-between p-2">
+            <div className='flex items-center gap-2'>
+                <div className="bg-primary p-2 rounded-lg">
+                <List className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <h1 className="text-xl font-bold">SwiftTrack</h1>
             </div>
-            <h1 className="text-xl font-bold">SwiftTrack</h1>
+            <CreateDriverDialog onDriverCreated={handleDriverCreated} />
           </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -114,11 +131,36 @@ export function AdminDashboard() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+             {!loading && drivers.length === 0 && (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                    No drivers found.
+                </div>
+            )}
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
         <div className="p-4 sm:p-6 lg:p-8">
+         {!loading && drivers.length === 0 ? (
+            <Card className="mt-10 max-w-2xl mx-auto text-center">
+              <CardHeader>
+                <CardTitle className="text-2xl">Welcome to SwiftTrack!</CardTitle>
+                <CardDescription>
+                  It looks like you don't have any drivers in your database yet.
+                  You can add them one-by-one, or seed the database with sample data to get started quickly.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
+                 <CreateDriverDialog onDriverCreated={handleDriverCreated} isPrimaryAction={true}/>
+                 <Button asChild variant="outline" size="lg">
+                    <Link href="/admin/seed">
+                        <Database className="mr-2"/>
+                        Seed Sample Drivers
+                    </Link>
+                 </Button>
+              </CardContent>
+            </Card>
+          ) : (
           <Tabs defaultValue="map" className="w-full">
             <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
               <TabsTrigger value="map"><MapIcon className="mr-2"/> Live Map</TabsTrigger>
@@ -145,6 +187,7 @@ export function AdminDashboard() {
               </Card>
             </TabsContent>
           </Tabs>
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>
