@@ -46,7 +46,7 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
         zoom={zoom} 
         scrollWheelZoom={true} 
         className="h-full w-full"
-        ref={mapRef}
+        whenCreated={map => mapRef.current = map}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
