@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, MapPin, Play, Square, LoaderCircle } from 'lucide-react';
-import { drivers } from '@/lib/data';
+import { type Driver } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
 
 type DriverInterfaceProps = {
-  driverId: string;
+  driver: Driver;
   onLogout: () => void;
 };
 
@@ -17,51 +19,77 @@ type Position = {
   lng: number;
 };
 
-export function DriverInterface({ driverId, onLogout }: DriverInterfaceProps) {
+export function DriverInterface({ driver, onLogout }: DriverInterfaceProps) {
   const [isTracking, setIsTracking] = useState(false);
-  const [position, setPosition] = useState<Position | null>(null);
-  const [status, setStatus] = useState<'idle' | 'tracking' | 'error' | 'loading'>('idle');
+  const [position, setPosition] = useState<Position | null>(driver.lastLocation);
+  const [currentStatus, setCurrentStatus] = useState<'idle' | 'tracking' | 'error' | 'loading'>('idle');
   const watchId = useRef<number | null>(null);
 
-  const driver = drivers.find(d => d.id === driverId);
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "drivers", driver.id), (doc) => {
+      const data = doc.data();
+      if(data?.status === 'online') {
+        setCurrentStatus('tracking');
+        setIsTracking(true);
+      } else {
+        setCurrentStatus('idle');
+        setIsTracking(false);
+      }
+    });
+    return () => unsub();
+  }, [driver.id]);
+
 
   const startTracking = () => {
     if (!navigator.geolocation) {
-      setStatus('error');
+      setCurrentStatus('error');
       console.error('Geolocation is not supported by your browser.');
       return;
     }
     
-    setStatus('loading');
+    setCurrentStatus('loading');
     watchId.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        setPosition({
+      async (pos) => {
+        const newPosition = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
+        };
+        setPosition(newPosition);
+        
+        const driverRef = doc(db, 'drivers', driver.id);
+        await updateDoc(driverRef, {
+          lastLocation: newPosition,
+          lastSeen: serverTimestamp(),
+          status: 'online',
         });
+        
         setIsTracking(true);
-        setStatus('tracking');
+        setCurrentStatus('tracking');
       },
       (err) => {
         console.error('Error watching position:', err);
-        setStatus('error');
+        setCurrentStatus('error');
         setIsTracking(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
-  const stopTracking = () => {
+  const stopTracking = async () => {
     if (watchId.current !== null) {
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
     }
+    const driverRef = doc(db, 'drivers', driver.id);
+    await updateDoc(driverRef, {
+      status: 'offline',
+      lastSeen: serverTimestamp()
+    });
     setIsTracking(false);
-    setStatus('idle');
+    setCurrentStatus('idle');
   };
 
   useEffect(() => {
-    // Cleanup on unmount
     return () => {
       if (watchId.current !== null) {
         navigator.geolocation.clearWatch(watchId.current);
@@ -76,9 +104,9 @@ export function DriverInterface({ driverId, onLogout }: DriverInterfaceProps) {
       startTracking();
     }
   };
-
+  
   const getStatusBadge = () => {
-    switch (status) {
+    switch (currentStatus) {
       case 'tracking':
         return <Badge variant="default" className="bg-green-600">Tracking Active</Badge>;
       case 'loading':
@@ -96,7 +124,7 @@ export function DriverInterface({ driverId, onLogout }: DriverInterfaceProps) {
       <CardContent className="flex flex-col items-center space-y-6 pt-6">
         <div className="text-center">
             <p className="text-muted-foreground">Welcome</p>
-            <h3 className="text-xl font-semibold">{driver?.name || driverId}</h3>
+            <h3 className="text-xl font-semibold">{driver?.name || driver.id}</h3>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -115,7 +143,7 @@ export function DriverInterface({ driverId, onLogout }: DriverInterfaceProps) {
           onClick={handleToggleTracking}
           size="lg"
           className="w-full"
-          disabled={status === 'loading'}
+          disabled={currentStatus === 'loading'}
         >
           {isTracking ? (
             <>

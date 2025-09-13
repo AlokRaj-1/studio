@@ -4,16 +4,17 @@ import { useState } from 'react';
 import { DriverLogin } from '@/components/driver/DriverLogin';
 import { DriverInterface } from '@/components/driver/DriverInterface';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { type Driver } from '@/lib/data';
 
 export default function DriverPage() {
-  const [driverId, setDriverId] = useState<string | null>(null);
+  const [driver, setDriver] = useState<Driver | null>(null);
 
-  const handleLogin = (id: string) => {
-    setDriverId(id);
+  const handleLogin = (loggedInDriver: Driver) => {
+    setDriver(loggedInDriver);
   };
 
   const handleLogout = () => {
-    setDriverId(null);
+    setDriver(null);
   };
 
   return (
@@ -24,10 +25,10 @@ export default function DriverPage() {
             SwiftTrack Driver
           </CardTitle>
         </CardHeader>
-        {!driverId ? (
+        {!driver ? (
           <DriverLogin onLogin={handleLogin} />
         ) : (
-          <DriverInterface driverId={driverId} onLogout={handleLogout} />
+          <DriverInterface driver={driver} onLogout={handleLogout} />
         )}
       </Card>
     </div>

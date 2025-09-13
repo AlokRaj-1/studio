@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
-import { Bot, List, Map as MapIcon, Search, User, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bot, List, Map as MapIcon, Search, X } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -18,14 +17,50 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapView } from './MapView';
 import { HistoricalRouteTool } from './HistoricalRouteTool';
-import { drivers, type Driver } from '@/lib/data';
+import { type Driver } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
+import { formatDistanceToNow } from 'date-fns';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+
+const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
 export function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(drivers[0] || null);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'drivers'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const driversData: Driver[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as DocumentData;
+        const avatar = avatarMap.get(data.avatar.id) || data.avatar;
+        const lastSeen = data.lastSeen?.toDate ? formatDistanceToNow(data.lastSeen.toDate(), { addSuffix: true }) : 'never';
+        
+        driversData.push({
+          id: doc.id,
+          name: data.name,
+          avatar: avatar,
+          lastLocation: data.lastLocation,
+          status: data.status,
+          lastSeen: lastSeen,
+        });
+      });
+      setDrivers(driversData);
+      if (loading) {
+        setSelectedDriver(driversData[0] || null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [loading]);
 
   const filteredDrivers = drivers.filter(driver =>
     driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,7 +140,7 @@ export function AdminDashboard() {
                   <CardTitle>Historical Route Analysis</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <HistoricalRouteTool />
+                  <HistoricalRouteTool drivers={drivers} />
                 </CardContent>
               </Card>
             </TabsContent>

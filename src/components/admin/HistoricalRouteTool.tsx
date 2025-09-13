@@ -22,13 +22,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
-import { drivers } from '@/lib/data';
 import { getHistoricalRouteAnalysis } from '@/app/actions';
 import { type HistoricalRouteAnalysisOutput } from '@/ai/flows/historical-route-analysis';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { type Driver } from '@/lib/data';
 
 const formSchema = z.object({
   driverId: z.string().min(1, 'Driver ID is required.'),
@@ -38,7 +38,11 @@ const formSchema = z.object({
   expectedRoute: z.string().min(1, 'Expected route is required.'),
 });
 
-export function HistoricalRouteTool() {
+type HistoricalRouteToolProps = {
+  drivers: Driver[];
+};
+
+export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<HistoricalRouteAnalysisOutput | null>(null);
   const { toast } = useToast();
