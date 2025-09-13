@@ -143,7 +143,7 @@ export function AdminDashboard() {
                       "ml-auto h-2 w-2 p-0",
                       driver.status === 'online' && 'bg-green-500',
                       driver.status === 'offline' && 'bg-gray-400',
-                      driver.status === 'inactive' && 'bg-red-500',
+                      driver.status === 'inactive' && 'bg-red-500'
                   )}></Badge>
                 </SidebarMenuButton>
               </SidebarMenuItem>
