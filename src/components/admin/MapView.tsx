@@ -1,26 +1,8 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useState, useEffect } from 'react';
+import { Map, Marker, Overlay } from 'pigeon-maps';
 import type { Driver } from '@/lib/data';
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-
-// Fix for default icon not showing in Leaflet
-import 'leaflet/dist/images/marker-shadow.png';
-import 'leaflet/dist/images/marker-icon.png';
-import 'leaflet/dist/images/marker-icon-2x.png';
-
-
-const defaultIcon = L.icon({
-    iconUrl: '/marker-icon.png',
-    iconRetinaUrl: '/marker-icon-2x.png',
-    shadowUrl: '/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    tooltipAnchor: [16, -28],
-    shadowSize: [41, 41]
-});
 
 type MapViewProps = {
   drivers: Driver[];
@@ -28,58 +10,55 @@ type MapViewProps = {
 };
 
 export function MapView({ drivers, selectedDriver }: MapViewProps) {
-  const mapRef = useRef<L.Map | null>(null);
-
-  const center: L.LatLngTuple = [31.1471, 75.3412];
-  const zoom = 7;
+  const [center, setCenter] = useState<[number, number]>([31.1471, 75.3412]);
+  const [zoom, setZoom] = useState(7);
+  const [activeMarker, setActiveMarker] = useState<Driver | null>(null);
 
   useEffect(() => {
-    if (mapRef.current && selectedDriver && selectedDriver.lastLocation.lat !== 0) {
-      mapRef.current.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 13);
+    if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
+      setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
+      setZoom(13);
     }
   }, [selectedDriver]);
 
-  // This cleanup effect is the definitive fix for the "Map container is already initialized" error.
-  useEffect(() => {
-    // This function will run when the component is unmounted
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
-
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
-      <MapContainer 
-        center={center} 
-        zoom={zoom} 
-        scrollWheelZoom={true} 
-        className="h-full w-full"
-        whenCreated={map => mapRef.current = map}
+      <Map
+        center={center}
+        zoom={zoom}
+        onBoundsChanged={({ center, zoom }) => {
+          setCenter(center);
+          setZoom(zoom);
+        }}
+        boxClassname="pigeon-map" // for some reason the default classname doesn't work
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {drivers.map(driver => (
-          driver.lastLocation.lat !== 0 &&
-          <Marker 
-            key={driver.id} 
-            position={[driver.lastLocation.lat, driver.lastLocation.lng]}
-            icon={defaultIcon}
-          >
-            <Popup>
-              <div className="p-0 m-0">
-                <h4 className="font-bold">{driver.name}</h4>
-                <p className="text-sm">{driver.id}</p>
-                <p className="text-xs text-muted-foreground">Last seen: {driver.lastSeen}</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+        {drivers.map(driver =>
+          driver.lastLocation.lat !== 0 && (
+            <Marker
+              key={driver.id}
+              width={40}
+              anchor={[driver.lastLocation.lat, driver.lastLocation.lng]}
+              onClick={() => setActiveMarker(driver)}
+              color={selectedDriver?.id === driver.id ? '#1980e5' : '#888888'}
+            />
+          )
+        )}
+        {activeMarker && (
+           <Overlay anchor={[activeMarker.lastLocation.lat, activeMarker.lastLocation.lng]} offset={[0, 0]}>
+             <div className="bg-background rounded-lg shadow-lg p-2 min-w-[150px] relative -translate-x-1/2 -translate-y-[calc(100%+10px)]"
+                onMouseLeave={() => setActiveMarker(null)}
+             >
+                <button
+                    onClick={() => setActiveMarker(null)}
+                    className="absolute top-0 right-1 text-lg font-bold"
+                >&times;</button>
+                <h4 className="font-bold">{activeMarker.name}</h4>
+                <p className="text-sm">{activeMarker.id}</p>
+                <p className="text-xs text-muted-foreground">Last seen: {activeMarker.lastSeen}</p>
+             </div>
+           </Overlay>
+        )}
+      </Map>
     </div>
   );
 }

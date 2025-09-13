@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler } from 'lucide-react';
 import {
   SidebarProvider,
@@ -31,11 +30,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const MapView = dynamic(() => import('./MapView').then(mod => mod.MapView), {
-  ssr: false,
-  loading: () => <Skeleton className="h-[60vh] w-full" />,
-});
+import { MapView } from './MapView';
 
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
