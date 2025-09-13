@@ -208,10 +208,10 @@ export function AdminDashboard() {
                <Card>
                 <CardHeader>
                   <CardTitle>Driver Location Editor</CardTitle>
-                   <CardDescription>
-                    Use AI to move a driver to a new location by describing it.
-                  </CardDescription>
-                </Header>
+                    <CardDescription>
+                      Use AI to move a driver to a new location by describing it.
+                    </CardDescription>
+                </CardHeader>
                 <CardContent>
                   <LocationEditorTool drivers={drivers} />
                 </CardContent>

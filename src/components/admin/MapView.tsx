@@ -40,7 +40,7 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
     if (map && selectedDriver && selectedDriver.lastLocation.lat !== 0) {
       map.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 13);
     }
-  }, [selectedDriver, map, selectedDriver?.lastLocation.lat, selectedDriver?.lastLocation.lng]);
+  }, [selectedDriver, map]);
 
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
