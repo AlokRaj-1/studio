@@ -2,9 +2,6 @@
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { Driver } from '@/lib/data';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import L from 'leaflet';
 
@@ -52,7 +49,7 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
         zoom={zoom} 
         scrollWheelZoom={true} 
         className="h-full w-full"
-        ref={setMap}
+        whenCreated={setMap}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

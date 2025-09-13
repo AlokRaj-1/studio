@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler } from 'lucide-react';
 import {
   SidebarProvider,
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapView } from './MapView';
 import { HistoricalRouteTool } from './HistoricalRouteTool';
 import { LocationEditorTool } from './LocationEditorTool';
 import { CreateDriverDialog } from './CreateDriverDialog';
@@ -30,6 +30,13 @@ import { formatDistanceToNow } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const MapView = dynamic(() => import('./MapView').then(mod => mod.MapView), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[60vh] w-full" />,
+});
+
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
@@ -116,7 +123,8 @@ export function AdminDashboard() {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {filteredDrivers.map(driver => (
+            {loading && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full mb-1" />)}
+            {!loading && filteredDrivers.map(driver => (
               <SidebarMenuItem key={driver.id}>
                 <SidebarMenuButton
                   onClick={() => setSelectedDriver(driver)}
@@ -203,7 +211,7 @@ export function AdminDashboard() {
                    <CardDescription>
                     Use AI to move a driver to a new location by describing it.
                   </CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                   <LocationEditorTool drivers={drivers} />
                 </CardContent>
