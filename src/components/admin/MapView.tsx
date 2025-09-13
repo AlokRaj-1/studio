@@ -10,9 +10,9 @@ type MapViewProps = {
   selectedDriver: Driver | null;
 };
 
-// Stamen Terrain map provider
-const stamenTerrain = (x: number, y: number, z: number, dpr?: number): string => {
-  return `https://tiles.stadiamaps.com/tiles/stamen_terrain/${z}/${x}/${y}${dpr && dpr > 1 ? `@${dpr}x` : ''}.png`;
+// OpenStreetMap provider
+const osmProvider = (x: number, y: number, z: number, dpr?: number): string => {
+  return `https://a.tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
 
 export function MapView({ drivers, selectedDriver }: MapViewProps) {
@@ -34,7 +34,7 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
       <Map
-        provider={stamenTerrain}
+        provider={osmProvider}
         center={center}
         zoom={zoom}
         onBoundsChanged={({ center, zoom }) => {
