@@ -2,31 +2,31 @@
   "placeholderImages": [
     {
       "id": "driver-1",
-      "description": "Avatar for driver Alex Ray",
+      "description": "Avatar for driver Rajesh Patel",
       "imageUrl": "https://picsum.photos/seed/101/100/100",
       "imageHint": "man portrait"
     },
     {
       "id": "driver-2",
-      "description": "Avatar for driver Maria Garcia",
+      "description": "Avatar for driver Sunita Devi",
       "imageUrl": "https://picsum.photos/seed/102/100/100",
       "imageHint": "woman portrait"
     },
     {
       "id": "driver-3",
-      "description": "Avatar for driver Kenji Tanaka",
+      "description": "Avatar for driver Amit Verma",
       "imageUrl": "https://picsum.photos/seed/103/100/100",
       "imageHint": "man portrait"
     },
     {
       "id": "driver-4",
-      "description": "Avatar for driver Fatima Al-Fassi",
+      "description": "Avatar for driver Meera Krishnan",
       "imageUrl": "https://picsum.photos/seed/104/100/100",
       "imageHint": "woman portrait"
     },
     {
       "id": "driver-5",
-      "description": "Avatar for driver John Smith",
+      "description": "Avatar for driver Sanjay Iyer",
       "imageUrl": "https://picsum.photos/seed/105/100/100",
       "imageHint": "man portrait"
     }

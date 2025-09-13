@@ -20,7 +20,7 @@ const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 export const drivers: Omit<Driver, 'lastSeen'>[] = [
   {
     id: 'DRI-001',
-    name: 'Arjun Kumar',
+    name: 'Rajesh Patel',
     avatar: avatarMap.get('driver-1')!,
     lastLocation: { lat: 30.7333, lng: 76.7794 }, // Chandigarh
     status: 'online',
@@ -28,7 +28,7 @@ export const drivers: Omit<Driver, 'lastSeen'>[] = [
   },
   {
     id: 'DRI-002',
-    name: 'Priya Sharma',
+    name: 'Sunita Devi',
     avatar: avatarMap.get('driver-2')!,
     lastLocation: { lat: 31.6340, lng: 74.8723 }, // Amritsar
     status: 'offline',
@@ -36,7 +36,7 @@ export const drivers: Omit<Driver, 'lastSeen'>[] = [
   },
   {
     id: 'DRI-003',
-    name: 'Rohan Singh',
+    name: 'Amit Verma',
     avatar: avatarMap.get('driver-3')!,
     lastLocation: { lat: 30.9010, lng: 75.8573 }, // Ludhiana
     status: 'online',
@@ -44,7 +44,7 @@ export const drivers: Omit<Driver, 'lastSeen'>[] = [
   },
   {
     id: 'DRI-004',
-    name: 'Ananya Gupta',
+    name: 'Meera Krishnan',
     avatar: avatarMap.get('driver-4')!,
     lastLocation: { lat: 30.3752, lng: 76.7821 }, // Patiala
     status: 'inactive',
@@ -52,7 +52,7 @@ export const drivers: Omit<Driver, 'lastSeen'>[] = [
   },
   {
     id: 'DRI-005',
-    name: 'Vikram Mehta',
+    name: 'Sanjay Iyer',
     avatar: avatarMap.get('driver-5')!,
     lastLocation: { lat: 31.3260, lng: 75.5762 }, // Jalandhar
     status: 'online',
