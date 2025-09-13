@@ -16,8 +16,8 @@ const stamenTerrain = (x: number, y: number, z: number, dpr?: number): string =>
 }
 
 export function MapView({ drivers, selectedDriver }: MapViewProps) {
-  const [center, setCenter] = useState<Point>([31.1471, 75.3412]);
-  const [zoom, setZoom] = useState(7);
+  const [center, setCenter] = useState<Point>([20.5937, 78.9629]); // Centered on India
+  const [zoom, setZoom] = useState(5); // Zoom to show most of India
   const [activeMarker, setActiveMarker] = useState<Driver | null>(null);
 
   useEffect(() => {
@@ -25,8 +25,9 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
       setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
       setZoom(13);
     } else {
-      setCenter([31.1471, 75.3412]);
-      setZoom(7);
+      // When no driver is selected, default to a view of India
+      setCenter([20.5937, 78.9629]);
+      setZoom(5);
     }
   }, [selectedDriver]);
 
