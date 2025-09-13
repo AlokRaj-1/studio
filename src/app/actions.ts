@@ -1,9 +1,10 @@
 'use server';
 
 import { analyzeHistoricalRoute, HistoricalRouteAnalysisInput } from '@/ai/flows/historical-route-analysis';
+import { getLocationCoordinates, LocationEditorInput } from '@/ai/flows/location-editor-flow';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const analysisFormSchema = z.object({
@@ -73,4 +74,43 @@ export async function createDriver(data: z.infer<typeof createDriverFormSchema>)
         }
         return { error: 'An unexpected error occurred while creating the driver.' };
     }
+}
+
+
+const locationEditorFormSchema = z.object({
+  driverId: z.string().min(1, 'Driver ID is required.'),
+  locationDescription: z.string().min(3, 'Location description is required.'),
+});
+
+export async function editDriverLocation(data: z.infer<typeof locationEditorFormSchema>) {
+  try {
+    const validatedData = locationEditorFormSchema.safeParse(data);
+    if (!validatedData.success) {
+      return { error: 'Invalid input data.', details: validatedData.error.format() };
+    }
+
+    const { driverId, locationDescription } = validatedData.data;
+
+    // Use AI to get coordinates from the description
+    const locationResult = await getLocationCoordinates({ locationDescription });
+    
+    if (!locationResult || !locationResult.lat || !locationResult.lng) {
+        return { error: 'Could not determine coordinates for the location.' };
+    }
+
+    const { lat, lng } = locationResult;
+
+    // Update the driver's location in Firestore
+    const driverRef = doc(db, 'drivers', driverId);
+    await updateDoc(driverRef, {
+      lastLocation: { lat, lng },
+      lastSeen: serverTimestamp(),
+    });
+
+    return { success: true, data: { ...locationResult, driverId } };
+
+  } catch (error) {
+    console.error('Error in editDriverLocation:', error);
+    return { error: 'An unexpected error occurred while updating the location.' };
+  }
 }

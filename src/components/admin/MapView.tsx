@@ -46,7 +46,7 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
   }, [selectedDriver, map, selectedDriver?.lastLocation.lat, selectedDriver?.lastLocation.lng]);
 
   return (
-    <div className="h-[60vh] w-full rounded-lg overflow-hidden border">
+    <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
       <MapContainer 
         center={center} 
         zoom={zoom} 

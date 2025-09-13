@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database } from 'lucide-react';
+import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapView } from './MapView';
 import { HistoricalRouteTool } from './HistoricalRouteTool';
+import { LocationEditorTool } from './LocationEditorTool';
 import { CreateDriverDialog } from './CreateDriverDialog';
 import { type Driver } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,15 +29,18 @@ import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore'
 import { formatDistanceToNow } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
 export function AdminDashboard() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'map');
+
 
   useEffect(() => {
     const q = query(collection(db, 'drivers'));
@@ -80,6 +84,11 @@ export function AdminDashboard() {
         setSelectedDriver(newDriver);
     }
   }
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.history.pushState(null, '', `?tab=${value}`);
+  };
 
   return (
     <SidebarProvider>
@@ -161,10 +170,11 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
           ) : (
-          <Tabs defaultValue="map" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto">
               <TabsTrigger value="map"><MapIcon className="mr-2"/> Live Map</TabsTrigger>
-              <TabsTrigger value="ai-tool"><Bot className="mr-2"/> Historical Route Tool</TabsTrigger>
+              <TabsTrigger value="ai-tool"><Bot className="mr-2"/> Historical Route</TabsTrigger>
+              <TabsTrigger value="location-editor"><PencilRuler className="mr-2"/> Location Editor</TabsTrigger>
             </TabsList>
             <TabsContent value="map" className="mt-6">
               <Card>
@@ -183,6 +193,19 @@ export function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <HistoricalRouteTool drivers={drivers} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="location-editor" className="mt-6">
+               <Card>
+                <CardHeader>
+                  <CardTitle>Driver Location Editor</CardTitle>
+                   <CardDescription>
+                    Use AI to move a driver to a new location by describing it.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <LocationEditorTool drivers={drivers} />
                 </CardContent>
               </Card>
             </TabsContent>
