@@ -39,6 +39,17 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
     }
   }, [selectedDriver]);
 
+  // This cleanup effect is the definitive fix for the "Map container is already initialized" error.
+  useEffect(() => {
+    // This function will run when the component is unmounted
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
       <MapContainer 
