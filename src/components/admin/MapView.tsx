@@ -3,14 +3,20 @@
 import { useState, useEffect } from 'react';
 import { Map, Marker, Overlay } from 'pigeon-maps';
 import type { Driver } from '@/lib/data';
+import type { Point } from 'pigeon-maps';
 
 type MapViewProps = {
   drivers: Driver[];
   selectedDriver: Driver | null;
 };
 
+// Stamen Terrain map provider
+const stamenTerrain = (x: number, y: number, z: number, dpr?: number): string => {
+  return `https://tiles.stadiamaps.com/tiles/stamen_terrain/${z}/${x}/${y}${dpr && dpr > 1 ? `@${dpr}x` : ''}.png`;
+}
+
 export function MapView({ drivers, selectedDriver }: MapViewProps) {
-  const [center, setCenter] = useState<[number, number]>([31.1471, 75.3412]);
+  const [center, setCenter] = useState<Point>([31.1471, 75.3412]);
   const [zoom, setZoom] = useState(7);
   const [activeMarker, setActiveMarker] = useState<Driver | null>(null);
 
@@ -19,7 +25,6 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
       setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
       setZoom(13);
     } else {
-      // If no driver is selected, or selected driver has no location, default to Punjab
       setCenter([31.1471, 75.3412]);
       setZoom(7);
     }
@@ -28,13 +33,14 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
       <Map
+        provider={stamenTerrain}
         center={center}
         zoom={zoom}
         onBoundsChanged={({ center, zoom }) => {
           setCenter(center);
           setZoom(zoom);
         }}
-        boxClassname="pigeon-map" // for some reason the default classname doesn't work
+        boxClassname="pigeon-map"
       >
         {drivers.map(driver =>
           driver.lastLocation.lat !== 0 && (
