@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { Driver } from '@/lib/data';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 
 // Fix for default icon not showing in Leaflet
@@ -28,7 +28,7 @@ type MapViewProps = {
 };
 
 export function MapView({ drivers, selectedDriver }: MapViewProps) {
-  const [map, setMap] = useState<L.Map | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
 
   const center: L.LatLngTuple = selectedDriver
     ? [selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]
@@ -37,10 +37,10 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
   const zoom = selectedDriver ? 13 : 7;
 
   useEffect(() => {
-    if (map && selectedDriver && selectedDriver.lastLocation.lat !== 0) {
-      map.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 13);
+    if (mapRef.current && selectedDriver && selectedDriver.lastLocation.lat !== 0) {
+      mapRef.current.flyTo([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng], 13);
     }
-  }, [selectedDriver, map]);
+  }, [selectedDriver]);
 
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
@@ -49,7 +49,7 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
         zoom={zoom} 
         scrollWheelZoom={true} 
         className="h-full w-full"
-        whenCreated={setMap}
+        ref={mapRef}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
