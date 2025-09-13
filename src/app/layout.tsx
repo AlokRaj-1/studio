@@ -4,8 +4,8 @@ import { ThemeWrapper } from '@/components/ThemeWrapper';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SwiftTrack',
-  description: 'Driver tracking and route analysis.',
+  title: 'BharatSwift',
+  description: 'Driver tracking and route analysis for modern India.',
 };
 
 export default function RootLayout({

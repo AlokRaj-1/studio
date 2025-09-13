@@ -51,8 +51,8 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       driverId: '',
-      liveLocationData: 'Current location: 34.0522 N, 118.2437 W',
-      expectedRoute: 'Standard delivery route for Downtown LA, covering ZIP codes 90012 to 90015.',
+      liveLocationData: 'Current location near India Gate, New Delhi',
+      expectedRoute: 'Standard delivery route from warehouse in Gurgaon to various points in South Delhi.',
     },
   });
 

@@ -19,42 +19,42 @@ const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
 export const drivers: Omit<Driver, 'lastSeen'>[] = [
   {
-    id: 'DRI-001',
-    name: 'Rajesh Patel',
+    id: 'DL12-CA4567',
+    name: 'Rohan Sharma',
     avatar: avatarMap.get('driver-1')!,
-    lastLocation: { lat: 30.7333, lng: 76.7794 }, // Chandigarh
+    lastLocation: { lat: 28.6139, lng: 77.2090 }, // Delhi
     status: 'online',
     password: 'password',
   },
   {
-    id: 'DRI-002',
-    name: 'Sunita Devi',
+    id: 'MH01-DJ8910',
+    name: 'Priya Mehta',
     avatar: avatarMap.get('driver-2')!,
-    lastLocation: { lat: 31.6340, lng: 74.8723 }, // Amritsar
+    lastLocation: { lat: 19.0760, lng: 72.8777 }, // Mumbai
     status: 'offline',
     password: 'password',
   },
   {
-    id: 'DRI-003',
-    name: 'Amit Verma',
+    id: 'KA05-MN1122',
+    name: 'Arjun Reddy',
     avatar: avatarMap.get('driver-3')!,
-    lastLocation: { lat: 30.9010, lng: 75.8573 }, // Ludhiana
+    lastLocation: { lat: 12.9716, lng: 77.5946 }, // Bengaluru
     status: 'online',
     password: 'password',
   },
   {
-    id: 'DRI-004',
-    name: 'Meera Krishnan',
+    id: 'TN07-BQ3344',
+    name: 'Ananya Krishnan',
     avatar: avatarMap.get('driver-4')!,
-    lastLocation: { lat: 30.3752, lng: 76.7821 }, // Patiala
+    lastLocation: { lat: 13.0827, lng: 80.2707 }, // Chennai
     status: 'inactive',
     password: 'password',
   },
   {
-    id: 'DRI-005',
-    name: 'Sanjay Iyer',
+    id: 'WB02-AF5566',
+    name: 'Vikram Banerjee',
     avatar: avatarMap.get('driver-5')!,
-    lastLocation: { lat: 31.3260, lng: 75.5762 }, // Jalandhar
+    lastLocation: { lat: 22.5726, lng: 88.3639 }, // Kolkata
     status: 'online',
     password: 'password',
   },

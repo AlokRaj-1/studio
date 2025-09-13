@@ -9,7 +9,7 @@ export default function Home() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader>
           <CardTitle className="text-center text-3xl font-bold tracking-tight text-primary">
-            Welcome to SwiftTrack
+            Welcome to BharatSwift
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col space-y-4 p-6">

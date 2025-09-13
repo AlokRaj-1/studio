@@ -2,33 +2,33 @@
   "placeholderImages": [
     {
       "id": "driver-1",
-      "description": "Avatar for driver Rajesh Patel",
-      "imageUrl": "https://picsum.photos/seed/101/100/100",
-      "imageHint": "man portrait"
+      "description": "Avatar for Rohan Sharma",
+      "imageUrl": "https://picsum.photos/seed/111/100/100",
+      "imageHint": "indian man"
     },
     {
       "id": "driver-2",
-      "description": "Avatar for driver Sunita Devi",
-      "imageUrl": "https://picsum.photos/seed/102/100/100",
-      "imageHint": "woman portrait"
+      "description": "Avatar for Priya Mehta",
+      "imageUrl": "https://picsum.photos/seed/112/100/100",
+      "imageHint": "indian woman"
     },
     {
       "id": "driver-3",
-      "description": "Avatar for driver Amit Verma",
-      "imageUrl": "https://picsum.photos/seed/103/100/100",
-      "imageHint": "man portrait"
+      "description": "Avatar for Arjun Reddy",
+      "imageUrl": "https://picsum.photos/seed/113/100/100",
+      "imageHint": "young man"
     },
     {
       "id": "driver-4",
-      "description": "Avatar for driver Meera Krishnan",
-      "imageUrl": "https://picsum.photos/seed/104/100/100",
-      "imageHint": "woman portrait"
+      "description": "Avatar for Ananya Krishnan",
+      "imageUrl": "https://picsum.photos/seed/114/100/100",
+      "imageHint": "young woman"
     },
     {
       "id": "driver-5",
-      "description": "Avatar for driver Sanjay Iyer",
-      "imageUrl": "https://picsum.photos/seed/105/100/100",
-      "imageHint": "man portrait"
+      "description": "Avatar for Vikram Banerjee",
+      "imageUrl": "https://picsum.photos/seed/115/100/100",
+      "imageHint": "man smiling"
     }
   ]
 }

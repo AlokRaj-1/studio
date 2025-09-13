@@ -65,7 +65,15 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
                 >&times;</button>
                 <h4 className="font-bold">{activeMarker.name}</h4>
                 <p className="text-sm">{activeMarker.id}</p>
-                <p className="text-xs text-muted-foreground">Last seen: {activeMarker.lastSeen}</p>
+                <p className="text-xs text-muted-foreground">
+                  Last seen: {
+                    typeof activeMarker.lastSeen === 'string'
+                      ? activeMarker.lastSeen
+                      : activeMarker.lastSeen?.toDate
+                        ? activeMarker.lastSeen.toDate().toLocaleString()
+                        : ''
+                  }
+                </p>
              </div>
            </Overlay>
         )}

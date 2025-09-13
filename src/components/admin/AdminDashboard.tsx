@@ -45,6 +45,11 @@ export function AdminDashboard() {
 
 
   useEffect(() => {
+    if (!db) {
+  setDrivers([]);
+  setLoading(false);
+  return;
+}
     const q = query(collection(db, 'drivers'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const driversData: Driver[] = [];
@@ -52,7 +57,6 @@ export function AdminDashboard() {
         const data = doc.data() as DocumentData;
         const avatar = avatarMap.get(data.avatar.id) || data.avatar;
         const lastSeen = data.lastSeen?.toDate ? formatDistanceToNow(data.lastSeen.toDate(), { addSuffix: true }) : 'never';
-        
         driversData.push({
           id: doc.id,
           name: data.name,
@@ -101,7 +105,7 @@ export function AdminDashboard() {
                 <div className="bg-primary p-2 rounded-lg">
                 <List className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <h1 className="text-xl font-bold">SwiftTrack</h1>
+                <h1 className="text-xl font-bold">BharatSwift</h1>
             </div>
             <CreateDriverDialog onDriverCreated={handleDriverCreated} />
           </div>
@@ -156,7 +160,7 @@ export function AdminDashboard() {
          {!loading && drivers.length === 0 ? (
             <Card className="mt-10 max-w-2xl mx-auto text-center">
               <CardHeader>
-                <CardTitle className="text-2xl">Welcome to SwiftTrack!</CardTitle>
+                <CardTitle className="text-2xl">Welcome to BharatSwift!</CardTitle>
                 <CardDescription>
                   It looks like you don't have any drivers in your database yet.
                   You can add them one-by-one, or seed the database with sample data to get started quickly.

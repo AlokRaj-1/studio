@@ -124,7 +124,8 @@ export function DriverInterface({ driver, onLogout }: DriverInterfaceProps) {
       <CardContent className="flex flex-col items-center space-y-6 pt-6">
         <div className="text-center">
             <p className="text-muted-foreground">Welcome</p>
-            <h3 className="text-xl font-semibold">{driver?.name || driver.id}</h3>
+            <h3 className="text-xl font-semibold">{driver?.name}</h3>
+            <p className="text-sm text-muted-foreground">{driver.id}</p>
         </div>
         
         <div className="flex items-center space-x-2">
