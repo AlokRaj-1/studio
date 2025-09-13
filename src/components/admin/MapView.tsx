@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Map, Marker, Overlay } from 'pigeon-maps';
 import type { Driver } from '@/lib/data';
 import type { Point } from 'pigeon-maps';
@@ -19,24 +19,36 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
   const [center, setCenter] = useState<Point>([20.5937, 78.9629]); // Centered on India
   const [zoom, setZoom] = useState(5); // Zoom to show most of India
   const [activeMarker, setActiveMarker] = useState<Driver | null>(null);
+  const mapRef = useRef<any>(null);
+
 
   useEffect(() => {
     if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
-      setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
-      setZoom(13);
+      const newCenter: Point = [selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng];
+      // Use the map's animate method if it's available
+      if (mapRef.current) {
+        mapRef.current.setCenterZoom(newCenter, 13, { duration: 500, ease: (t: number) => t });
+      } else {
+        setCenter(newCenter);
+        setZoom(13);
+      }
     } else {
-      // When no driver is selected, default to a view of India
-      setCenter([20.5937, 78.9629]);
-      setZoom(5);
+       if (mapRef.current) {
+        mapRef.current.setCenterZoom([20.5937, 78.9629], 5, { duration: 500, ease: (t: number) => t });
+      } else {
+        setCenter([20.5937, 78.9629]);
+        setZoom(5);
+      }
     }
   }, [selectedDriver]);
 
   return (
     <div className="h-[60vh] w-full rounded-lg overflow-hidden border relative z-0">
       <Map
+        ref={mapRef}
         provider={osmProvider}
-        center={center}
-        zoom={zoom}
+        defaultCenter={center}
+        defaultZoom={zoom}
         onBoundsChanged={({ center, zoom }) => {
           setCenter(center);
           setZoom(zoom);

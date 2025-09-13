@@ -85,7 +85,7 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
     <div className="space-y-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="driverId"
@@ -110,7 +110,7 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="startDate"
@@ -142,7 +142,7 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
               control={form.control}
               name="liveLocationData"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="md:col-span-2">
                   <FormLabel>Live Location Data</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Enter current GPS data..." {...field} />
@@ -155,13 +155,13 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
               control={form.control}
               name="expectedRoute"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="md:col-span-2">
                   <FormLabel>Expected Route Description</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Describe the expected route..." {...field} />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
+                </Form_Item>
               )}
             />
           </div>
