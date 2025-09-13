@@ -35,9 +35,9 @@ export function MapView({ drivers, selectedDriver }: MapViewProps) {
 
   const center: L.LatLngTuple = selectedDriver
     ? [selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]
-    : [39.8283, -98.5795];
+    : [31.1471, 75.3412];
   
-  const zoom = selectedDriver ? 12 : 4;
+  const zoom = selectedDriver ? 12 : 7;
 
   useEffect(() => {
     if (map && selectedDriver) {
