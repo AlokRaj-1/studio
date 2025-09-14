@@ -25,16 +25,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { db, auth } from '@/lib/firebase';
-import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
+import { getAuth, signOut } from 'firebase/auth';
 import { formatDistanceToNow } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapView } from './MapView';
-import { signOut } from 'firebase/auth';
 
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 

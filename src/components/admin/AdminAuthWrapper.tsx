@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { app } from '@/lib/firebase';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+
+const auth = getAuth(app);
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();

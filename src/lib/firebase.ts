@@ -2,8 +2,6 @@
 'use client';
 
 import { initializeApp, getApp, getApps, FirebaseOptions } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 
 const firebaseConfig: FirebaseOptions = {
   projectId: "studio-5212431881-c5493",
@@ -16,11 +14,9 @@ const firebaseConfig: FirebaseOptions = {
 
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 if (!app) {
     console.error('Firebase initialization failed. Check your configuration.');
 }
 
-export { app, db, auth };
+export { app };

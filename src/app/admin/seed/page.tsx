@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoaderCircle, CheckCircle } from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { drivers as mockDrivers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
+
+const db = getFirestore(app);
 
 export default function SeedPage() {
   const [isLoading, setIsLoading] = useState(false);

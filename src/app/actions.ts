@@ -3,9 +3,11 @@
 import { analyzeHistoricalRoute, HistoricalRouteAnalysisInput } from '@/ai/flows/historical-route-analysis';
 import { getLocationCoordinates, LocationEditorInput } from '@/ai/flows/location-editor-flow';
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+
+const db = getFirestore(app);
 
 const analysisFormSchema = z.object({
   driverId: z.string().min(1, 'Driver ID is required.'),

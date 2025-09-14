@@ -6,8 +6,10 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, MapPin, Play, Square, LoaderCircle } from 'lucide-react';
 import { type Driver } from '@/lib/data';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+import { getFirestore, doc, updateDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+
+const db = getFirestore(app);
 
 type DriverInterfaceProps = {
   driver: Driver;

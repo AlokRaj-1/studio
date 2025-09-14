@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { type Driver } from '@/lib/data';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
+
+const db = getFirestore(app);
 
 type DriverLoginProps = {
   onLogin: (driver: Driver) => void;
