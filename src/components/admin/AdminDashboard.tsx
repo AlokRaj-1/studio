@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -35,13 +34,16 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapView } from './MapView';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { signOutUser, useAuth } from '@/lib/auth';
+import { toast } from '@/hooks/use-toast';
 
 const db = getFirestore(app);
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
 export function AdminDashboard() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,19 +91,25 @@ export function AdminDashboard() {
   );
 
   const handleDriverCreated = (newDriverId: string) => {
-    const newDriver = drivers.find(d => d.id === newDriverId);
-    if (newDriver) {
-        setSelectedDriver(newDriver);
-    }
+    // A bit of a delay to allow firestore to propagate
+    setTimeout(() => {
+        const newDriver = drivers.find(d => d.id === newDriverId) || (drivers.length > 0 ? drivers[0] : null);
+         if (newDriver) {
+            setSelectedDriver(newDriver);
+        }
+    }, 500);
   }
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    window.history.pushState(null, '', `?tab=${value}`);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', value);
+    window.history.pushState(null, '', `?${params.toString()}`);
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('isAdminLoggedIn');
+  const handleLogout = async () => {
+    await signOutUser();
+    toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
     router.push('/admin/login');
   };
 
@@ -160,6 +168,7 @@ export function AdminDashboard() {
                       driver.status === 'inactive' && 'bg-red-500'
                   )}></Badge>
                 </SidebarMenuButton>
+                 <TooltipProvider>
                  <Tooltip>
                     <TooltipTrigger asChild>
                         <Button 
@@ -176,33 +185,37 @@ export function AdminDashboard() {
                         <p>Find on map</p>
                     </TooltipContent>
                  </Tooltip>
+                 </TooltipProvider>
               </SidebarMenuItem>
             ))}
              {!loading && drivers.length === 0 && (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                    No drivers found.
+                    No drivers found in the database.
                 </div>
             )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
             <SidebarSeparator/>
-             <SidebarMenu>
-                <SidebarMenuItem>
-                    <Link href="/driver" className="w-full">
-                        <SidebarMenuButton tooltip="Switch to Driver View">
-                            <ArrowRightLeft/>
-                            <span>Switch to Driver View</span>
+             <div className="p-2 flex flex-col gap-2 items-start">
+                <span className="text-sm font-medium truncate px-2" title={user?.email || ''}>{user?.email}</span>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <Link href="/driver" className="w-full">
+                            <SidebarMenuButton tooltip="Switch to Driver View">
+                                <ArrowRightLeft/>
+                                <span>Switch to Driver View</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+                            <LogOut/>
+                            <span>Logout</span>
                         </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
-                        <LogOut/>
-                        <span>Logout</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-             </SidebarMenu>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+             </div>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

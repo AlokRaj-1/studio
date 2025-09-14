@@ -1,37 +1,38 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
+  const { user, loading } = useAuth();
+  
   useEffect(() => {
-    // We can only access sessionStorage on the client
-    const checkAuth = () => {
-      const adminLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-      setIsAuthenticated(adminLoggedIn);
-      setLoading(false);
+    if (loading) {
+      return; // Wait until authentication state is loaded
+    }
 
-      const isLoginPage = pathname === '/admin/login';
-      const isSeedPage = pathname === '/admin/seed';
+    const isAuthPage = pathname === '/admin/login' || pathname === '/admin/signup';
+    const isSeedPage = pathname === '/admin/seed';
+    const isAuthenticated = !!user;
 
-      if (!isLoginPage && !isSeedPage && !adminLoggedIn) {
-        router.replace('/admin/login');
-      }
+    // If user is not authenticated and not on an auth/seed page, redirect to login
+    if (!isAuthenticated && !isAuthPage && !isSeedPage) {
+      router.replace('/admin/login');
+    }
+    
+    // If user is authenticated and on an auth page, redirect to the dashboard
+    if (isAuthenticated && isAuthPage) {
+      router.replace('/admin');
+    }
 
-      if ((isLoginPage || isSeedPage) && adminLoggedIn) {
-        router.replace('/admin');
-      }
-    };
-    checkAuth();
-  }, [pathname, router]);
+  }, [user, loading, pathname, router]);
 
+  // While loading authentication state, show a spinner
   if (loading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -39,26 +40,26 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
-  const isLoginPage = pathname === '/admin/login';
-  const isSeedPage = pathname === '/admin/seed';
 
-  if (!isAuthenticated && !isLoginPage && !isSeedPage) {
-     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/signup';
+  const isAuthenticated = !!user;
+
+  // Prevent flicker for redirects
+  if (!isAuthenticated && !isAuthPage && pathname !== '/admin/seed') {
+    return (
+       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (isAuthenticated && (isLoginPage || isSeedPage)) {
+  if (isAuthenticated && isAuthPage) {
      return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-
 
   return <>{children}</>;
 }

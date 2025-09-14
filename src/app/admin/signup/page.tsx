@@ -8,35 +8,41 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { KeyRound, LogIn, Mail, UserPlus } from 'lucide-react';
+import { KeyRound, Mail, UserPlus, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
-import { signInWithEmail, getFirebaseAuthErrorMessage } from '@/lib/auth';
-import { LoaderCircle } from 'lucide-react';
+import { signUpWithEmail, getFirebaseAuthErrorMessage } from '@/lib/auth';
 
-export default function AdminLoginPage() {
+export default function AdminSignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signInWithEmail(email, password);
+      await signUpWithEmail(email, password);
       toast({
-        title: 'Login Successful',
-        description: 'Welcome to the Admin Dashboard.',
+        title: 'Account Created Successfully',
+        description: 'You can now sign in with your new account.',
       });
-      router.push('/admin');
+      router.push('/admin/login');
     } catch (authError: any) {
       setError(getFirebaseAuthErrorMessage(authError));
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -45,13 +51,13 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader>
           <CardTitle className="text-center text-3xl font-bold tracking-tight text-primary">
-            Admin Access
+            Create Admin Account
           </CardTitle>
           <CardDescription className="text-center">
-            Sign in to manage BharatSwift.
+            Enter your details to create a new administrator account.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4 pt-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -89,22 +95,37 @@ export default function AdminLoginPage() {
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setError('');
+                  }}
+                  required
+                  placeholder="••••••••"
+                  className="pl-10"
+                />
+              </div>
+            </div>
              {error && <p className="text-sm font-medium text-destructive">{error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <LoaderCircle className="animate-spin" /> : <LogIn />}
-              Sign In
+              {loading ? <LoaderCircle className="animate-spin" /> : <UserPlus />}
+               Sign Up
             </Button>
             <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{' '}
+                Already have an account?{' '}
                 <Button variant="link" asChild className="p-0 h-auto">
-                    <Link href="/admin/signup">Sign Up</Link>
+                    <Link href="/admin/login">Sign In</Link>
                 </Button>
             </div>
-             <Button variant="link" className="w-full" asChild>
-                <Link href="/driver">Switch to Driver View</Link>
-            </Button>
           </CardFooter>
         </form>
       </Card>
