@@ -10,6 +10,10 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {app} from '@/lib/firebase';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+
+const db = getFirestore(app);
 
 const ETAInputSchema = z.object({
   from: z.string().describe('The starting location, e.g., a city name.'),
@@ -67,7 +71,28 @@ const etaFlow = ai.defineFlow(
     outputSchema: ETAOutputSchema,
   },
   async input => {
+    // Generate a consistent cache key
+    const cacheKey = `eta-${input.from.toLowerCase().replace(/\s/g, '-')}-to-${input.to.toLowerCase().replace(/\s/g, '-')}`;
+    const cacheRef = doc(db, 'routeCache', cacheKey);
+    
+    // Check cache first
+    const cacheSnap = await getDoc(cacheRef);
+    if (cacheSnap.exists()) {
+      console.log(`[Cache Hit] Returning cached route for ${cacheKey}`);
+      return ETAOutputSchema.parse(cacheSnap.data());
+    }
+    
+    console.log(`[Cache Miss] Generating new route for ${cacheKey}`);
+    
+    // If not in cache, call the AI
     const {output} = await prompt(input);
+    
+    // Save the new result to the cache
+    if (output) {
+      await setDoc(cacheRef, output);
+      console.log(`[Cache Set] Saved new route for ${cacheKey}`);
+    }
+    
     return output!;
   }
 );
