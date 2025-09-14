@@ -13,21 +13,31 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-function initializeFirebase() {
-  if (!firebaseConfig.apiKey) {
-    console.error(
-      'Firebase API Key is missing. Please add NEXT_PUBLIC_FIREBASE_API_KEY to your .env file.'
-    );
-    // Return mock or dummy objects to prevent app crash
-    return { app: null, db: null, auth: null };
-  }
+let app, db, auth;
 
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  return { app, db, auth };
+// Check if we are in a browser environment before initializing
+if (typeof window !== 'undefined') {
+  try {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+    auth = getAuth(app);
+  } catch (e: any) {
+     if (
+      !firebaseConfig.apiKey ||
+      !firebaseConfig.projectId
+    ) {
+        console.error(
+          'Firebase config is missing. Please ensure your .env file is set up correctly.'
+        );
+    } else {
+        console.error('Firebase initialization error:', e.message);
+    }
+    // Set to null if initialization fails
+    app = null;
+    db = null;
+    auth = null;
+  }
 }
 
-const { app, db, auth } = initializeFirebase();
 
 export { app, db, auth };
