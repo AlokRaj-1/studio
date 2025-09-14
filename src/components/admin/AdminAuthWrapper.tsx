@@ -3,50 +3,43 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const authStatus = sessionStorage.getItem('isAdminAuthenticated') === 'true';
-      setIsAuthenticated(authStatus);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-      if (!authStatus && pathname !== '/admin/login') {
-        router.replace('/admin/login');
-      } else if (authStatus && pathname === '/admin/login') {
-        router.replace('/admin');
-      }
-    } catch (error) {
-       // sessionStorage is not available on the server
-       setIsAuthenticated(false);
-       if (pathname !== '/admin/login') {
-        router.replace('/admin/login');
-       }
+  useEffect(() => {
+    if (loading) return;
+
+    const isAuthenticated = !!user;
+    const isLoginPage = pathname === '/admin/login';
+
+    if (!isAuthenticated && !isLoginPage) {
+      router.replace('/admin/login');
+    } else if (isAuthenticated && isLoginPage) {
+      router.replace('/admin');
     }
-  }, [pathname, router]);
+  }, [user, loading, pathname, router]);
 
-  // If we are checking auth status, show a loader
-  if (isAuthenticated === null) {
+  if (loading || (!user && pathname !== '/admin/login') || (user && pathname === '/admin/login')) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-
-  // If user is not authenticated and not on the login page, the redirect is happening.
-  // We can return a loader here as well to prevent flashing the content.
-  if (!isAuthenticated && pathname !== '/admin/login') {
-     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
 
   return <>{children}</>;
 }
