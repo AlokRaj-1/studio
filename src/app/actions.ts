@@ -55,13 +55,14 @@ export async function createDriver(data: z.infer<typeof createDriverFormSchema>)
         
         const driverRef = doc(db, 'drivers', id);
 
-        // Use a random placeholder avatar
-        const randomAvatar = PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)];
+        // Use a deterministic method to select a placeholder avatar to avoid hydration errors
+        const avatarIndex = name.length % PlaceHolderImages.length;
+        const selectedAvatar = PlaceHolderImages[avatarIndex];
         
         await setDoc(driverRef, {
             name,
             password,
-            avatar: randomAvatar,
+            avatar: selectedAvatar,
             lastLocation: { lat: 0, lng: 0 },
             status: 'inactive',
             lastSeen: serverTimestamp(),
