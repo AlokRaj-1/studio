@@ -1,3 +1,4 @@
+
 'use client';
 
 import { initializeApp, getApp, getApps, FirebaseOptions } from 'firebase/app';
@@ -13,31 +14,28 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-let app, db, auth;
+// Initialize Firebase
+let app;
+let auth;
+let db;
 
-// Check if we are in a browser environment before initializing
 if (typeof window !== 'undefined') {
   try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    db = getFirestore(app);
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
+    db = getFirestore(app);
   } catch (e: any) {
-     if (
-      !firebaseConfig.apiKey ||
-      !firebaseConfig.projectId
-    ) {
-        console.error(
-          'Firebase config is missing. Please ensure your .env file is set up correctly.'
-        );
-    } else {
-        console.error('Firebase initialization error:', e.message);
+    console.error('Firebase initialization error:', e.message);
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      console.error(
+        'Firebase config is missing or incomplete. Please ensure your .env file is set up correctly with all NEXT_PUBLIC_FIREBASE_ variables.'
+      );
     }
-    // Set to null if initialization fails
+    // Set to null if initialization fails to prevent further errors
     app = null;
-    db = null;
     auth = null;
+    db = null;
   }
 }
-
 
 export { app, db, auth };

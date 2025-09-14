@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,11 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { KeyRound, LogIn, Mail } from 'lucide-react';
+import { KeyRound, LogIn, Mail, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -25,6 +27,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
   const { toast } = useToast();
@@ -36,6 +39,25 @@ export default function AdminLoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login Successful',
+        description: 'Welcome to the Admin Dashboard.',
+      });
+      router.push('/admin');
+    } catch (error: any) {
+      setError(error.message);
+    }
+  };
+  
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      toast({
+        title: 'Sign Up Successful',
         description: 'Welcome to the Admin Dashboard.',
       });
       router.push('/admin');
@@ -61,73 +83,151 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-2xl">
-        <form onSubmit={handleLogin}>
-          <CardHeader>
+        <CardHeader>
             <CardTitle className="text-center text-3xl font-bold tracking-tight text-primary">
-              Admin Login
+              Admin Access
             </CardTitle>
             <CardDescription className="text-center">
-              Sign in to access the BharatSwift dashboard.
+              Sign in or create an account to manage BharatSwift.
             </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
-                  required
-                  placeholder="admin@example.com"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
-                  }}
-                  required
-                  placeholder="********"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            {error && <p className="text-sm font-medium text-destructive text-center">{error}</p>}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full">
-              <LogIn className="mr-2 h-5 w-5" /> Sign In
-            </Button>
+        </CardHeader>
+        <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            <TabsContent value="login">
+                <form onSubmit={handleLogin}>
+                    <CardContent className="space-y-4 pt-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="login-email">Email</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                id="login-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    setError('');
+                                }}
+                                required
+                                placeholder="admin@example.com"
+                                className="pl-10"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="login-password">Password</Label>
+                            <div className="relative">
+                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                id="login-password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    setError('');
+                                }}
+                                required
+                                placeholder="********"
+                                className="pl-10"
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col gap-4">
+                        <Button type="submit" className="w-full">
+                        <LogIn className="mr-2 h-5 w-5" /> Sign In
+                        </Button>
+                    </CardFooter>
+                </form>
+            </TabsContent>
+            <TabsContent value="signup">
+                <form onSubmit={handleSignUp}>
+                    <CardContent className="space-y-4 pt-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="signup-email">Email</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                id="signup-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    setError('');
+                                }}
+                                required
+                                placeholder="admin@example.com"
+                                className="pl-10"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="signup-password">Password</Label>
+                            <div className="relative">
+                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                id="signup-password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    setError('');
+                                }}
+                                required
+                                placeholder="********"
+                                className="pl-10"
+                                />
+                            </div>
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                            <div className="relative">
+                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                id="signup-confirm-password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => {
+                                    setConfirmPassword(e.target.value);
+                                    setError('');
+                                }}
+                                required
+                                placeholder="********"
+                                className="pl-10"
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                     <CardFooter className="flex flex-col gap-4">
+                        <Button type="submit" className="w-full">
+                            <UserPlus className="mr-2 h-5 w-5" /> Sign Up
+                        </Button>
+                    </CardFooter>
+                </form>
+            </TabsContent>
+        </Tabs>
 
-            <div className="relative w-full flex items-center justify-center">
-                <Separator className="w-full" />
-                <span className="absolute bg-card px-2 text-sm text-muted-foreground">OR</span>
-            </div>
-            
+        {error && <p className="text-sm font-medium text-destructive text-center pb-4 px-6">{error}</p>}
+        
+        <div className="relative flex items-center justify-center px-6 pb-4">
+            <Separator className="w-full" />
+            <span className="absolute bg-card px-2 text-sm text-muted-foreground">OR</span>
+        </div>
+        
+        <div className="px-6 pb-4">
             <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
-              <GoogleIcon className="mr-2 h-5 w-5" /> Sign in with Google
+                <GoogleIcon className="mr-2 h-5 w-5" /> Continue with Google
             </Button>
-            
-            <Button variant="link" className="w-full" asChild>
+        </div>
+        
+        <CardFooter>
+             <Button variant="link" className="w-full" asChild>
                 <Link href="/driver">Switch to Driver View</Link>
             </Button>
-          </CardFooter>
-        </form>
+        </CardFooter>
       </Card>
     </div>
   );
