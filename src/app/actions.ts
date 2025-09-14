@@ -40,7 +40,7 @@ export async function getHistoricalRouteAnalysis(data: z.infer<typeof analysisFo
 
 const createDriverFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  id: z.string().min(3, { message: "ID must be at least 3 characters." }).regex(/^[A-Z]{2}\d{2}-[A-Z]{2}\d{4}$/, { message: "ID must be in the format 'XX00-XX0000'."}),
+  id: z.string().min(3, { message: "ID must be at least 3 characters." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters."}),
 });
 

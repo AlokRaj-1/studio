@@ -33,7 +33,7 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  id: z.string().min(3, { message: "ID must be at least 3 characters." }).regex(/^[A-Z]{2}\d{2}-[A-Z]{2}\d{4}$/, { message: "ID must be in the format 'XX00-XX0000'."}),
+  id: z.string().min(3, { message: "ID must be at least 3 characters." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters."}),
 });
 
@@ -121,10 +121,10 @@ export function CreateDriverDialog({ onDriverCreated, isPrimaryAction = false }:
                 <FormItem>
                   <FormLabel>Vehicle Number (ID)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. MH01-AB1234" {...field} />
+                    <Input placeholder="e.g. MH 01 AB 1234" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Must be a valid vehicle registration format.
+                    This must be a unique vehicle registration number.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
