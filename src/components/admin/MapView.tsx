@@ -77,14 +77,18 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
         center={center}
         zoom={zoom}
         onBoundsChanged={(state) => {
-          setCenter(state.center);
-          setZoom(state.zoom);
-          setMapState(state);
-        }}
-         onAnimationStop={(state) => {
+          if (state) {
             setCenter(state.center);
             setZoom(state.zoom);
             setMapState(state);
+          }
+        }}
+         onAnimationStop={(state) => {
+            if (state) {
+                setCenter(state.center);
+                setZoom(state.zoom);
+                setMapState(state);
+            }
         }}
         metaWheelZoom={true}
       >
