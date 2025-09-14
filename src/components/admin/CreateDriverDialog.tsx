@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,7 +44,7 @@ type CreateDriverDialogProps = {
 
 export function CreateDriverDialog({ onDriverCreated, isPrimaryAction = false }: CreateDriverDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -56,26 +56,26 @@ export function CreateDriverDialog({ onDriverCreated, isPrimaryAction = false }:
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    const result = await createDriver(values);
-    setIsLoading(false);
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    startTransition(async () => {
+        const result = await createDriver(values);
 
-    if (result.success) {
-      toast({
-        title: 'Driver Created',
-        description: `Driver ${values.name} has been added successfully.`,
-      });
-      onDriverCreated(result.driverId!);
-      setIsOpen(false);
-      form.reset();
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Creation Failed',
-        description: result.error || 'An unknown error occurred.',
-      });
-    }
+        if (result.success) {
+        toast({
+            title: 'Driver Created',
+            description: `Driver ${values.name} has been added successfully.`,
+        });
+        onDriverCreated(result.driverId!);
+        setIsOpen(false);
+        form.reset();
+        } else {
+        toast({
+            variant: 'destructive',
+            title: 'Creation Failed',
+            description: result.error || 'An unknown error occurred.',
+        });
+        }
+    });
   }
 
   const TriggerButton = isPrimaryAction ? (
@@ -144,8 +144,8 @@ export function CreateDriverDialog({ onDriverCreated, isPrimaryAction = false }:
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                 Create Driver
               </Button>
             </DialogFooter>
