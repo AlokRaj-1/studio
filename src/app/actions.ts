@@ -5,7 +5,7 @@ import { getLocationCoordinates, LocationEditorInput } from '@/ai/flows/location
 import { getETA, ETAInput } from '@/ai/flows/eta-flow';
 import { z } from 'zod';
 import { app } from '@/lib/firebase';
-import { getFirestore, collection, doc, setDoc, serverTimestamp, updateDoc, getDocs, query, where } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, serverTimestamp, updateDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Driver } from '@/lib/data';
 
@@ -152,13 +152,15 @@ export async function getActiveDrivers(): Promise<{ drivers: Driver[] }> {
     const drivers: Driver[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      const lastSeen = data.lastSeen as Timestamp | undefined;
+
       drivers.push({
         id: doc.id,
         name: data.name,
         avatar: data.avatar,
         lastLocation: data.lastLocation,
         status: data.status,
-        lastSeen: data.lastSeen.toDate().toISOString(),
+        lastSeen: lastSeen?.toDate ? lastSeen.toDate().toISOString() : new Date().toISOString(),
       });
     });
     return { drivers };
