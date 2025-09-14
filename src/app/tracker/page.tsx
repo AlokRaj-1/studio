@@ -43,15 +43,6 @@ type ETAResult = {
 export default function TrackerPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ETAResult | null>(null);
-  const [busPosition, setBusPosition] = useState<Point | null>(null);
-  const [mockDriver, setMockDriver] = useState<Driver>({
-    id: 'PB01-BUS-001',
-    name: 'Punjab Roadways',
-    avatar: { id: 'driver-1', imageUrl: '', imageHint: 'bus', description: 'Bus' },
-    lastLocation: { lat: 30.9010, lng: 75.8573 }, // Ludhiana
-    lastSeen: new Date().toISOString(),
-    status: 'online',
-  });
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -62,52 +53,9 @@ export default function TrackerPage() {
     },
   });
 
-  useEffect(() => {
-    let animationFrameId: number;
-
-    if (result && result.routePath.length > 0) {
-      setBusPosition(result.routePath[0]);
-      const totalSteps = 500; // Number of steps for the animation loop
-      let step = 0;
-
-      const animate = () => {
-        const pathIndex = Math.floor((step / totalSteps) * (result.routePath.length - 1));
-        const nextPathIndex = Math.min(pathIndex + 1, result.routePath.length - 1);
-        
-        const start = result.routePath[pathIndex];
-        const end = result.routePath[nextPathIndex];
-        
-        const fraction = ((step % (totalSteps / (result.routePath.length -1))) / (totalSteps / (result.routePath.length - 1)));
-        
-        const lat = start[0] + (end[0] - start[0]) * fraction;
-        const lng = start[1] + (end[1] - start[1]) * fraction;
-        
-        const newBusPosition: Point = [lat, lng];
-        setBusPosition(newBusPosition);
-
-        setMockDriver(prev => ({
-          ...prev,
-          lastLocation: { lat: newBusPosition[0], lng: newBusPosition[1] }
-        }));
-        
-        step = (step + 1) % totalSteps;
-        animationFrameId = requestAnimationFrame(animate);
-      };
-      
-      animationFrameId = requestAnimationFrame(animate);
-    }
-    
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [result]);
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
-    setBusPosition(null);
     try {
       const response = await getRouteETA(values);
       if (response.error) {
@@ -134,8 +82,6 @@ export default function TrackerPage() {
       setIsLoading(false);
     }
   }
-  
-  const driversToShow = busPosition ? [{...mockDriver, lastLocation: {lat: busPosition[0], lng: busPosition[1]}}] : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -265,8 +211,8 @@ export default function TrackerPage() {
           </CardHeader>
           <CardContent>
             <MapView 
-              drivers={driversToShow} 
-              selectedDriver={driversToShow[0]}
+              drivers={[]} 
+              selectedDriver={null}
               routePath={result?.routePath}
               busStops={result?.busStops}
             />
