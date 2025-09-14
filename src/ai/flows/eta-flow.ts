@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getDirections } from '../tools/get-directions';
 
 const ETAInputSchema = z.object({
   from: z.string().describe('The starting location, e.g., a city name.'),
@@ -44,15 +45,15 @@ const prompt = ai.definePrompt({
   name: 'etaPrompt',
   input: {schema: ETAInputSchema},
   output: {schema: ETAOutputSchema},
-  prompt: `You are an expert Punjabi travel assistant. Your task is to calculate the estimated travel time, distance, and provide a route summary for a bus trip between two locations in Punjab, India.
+  tools: [getDirections],
+  prompt: `You are an expert Punjabi travel assistant. Your task is to provide route details for a bus trip between two locations in Punjab, India.
 
-  Consider typical bus travel conditions, traffic, and standard routes.
+  Use the attached getDirections tool to get the primary route information. Then, based on the route summary provided by the tool, identify 5-7 major towns or cities that would serve as bus stops. Provide their coordinates.
 
   From: "{{from}}"
   To: "{{to}}"
 
-  Provide the ETA in minutes, the distance in kilometers, a short summary of the route, the average speed in km/h, a list of 5-7 major bus stops with their coordinates, and a detailed route path with at least 15-20 coordinates to draw on a map.
-  Ensure the output is formatted as a JSON object matching the ETAOutputSchema.
+  Finally, assemble all the information into the ETAOutputSchema format. Calculate the average speed based on the distance and duration from the tool.
 `,
 });
 
