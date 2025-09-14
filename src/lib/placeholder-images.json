@@ -29,6 +29,36 @@
       "description": "Avatar for Vikram Banerjee",
       "imageUrl": "https://picsum.photos/seed/115/100/100",
       "imageHint": "man smiling"
+    },
+    {
+      "id": "driver-6",
+      "description": "Avatar for Suresh Singh",
+      "imageUrl": "https://picsum.photos/seed/116/100/100",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "driver-7",
+      "description": "Avatar for Meera Desai",
+      "imageUrl": "https://picsum.photos/seed/117/100/100",
+      "imageHint": "woman smiling"
+    },
+    {
+      "id": "driver-8",
+      "description": "Avatar for Nikhil Kumar",
+      "imageUrl": "https://picsum.photos/seed/118/100/100",
+      "imageHint": "young man"
+    },
+    {
+      "id": "driver-9",
+      "description": "Avatar for Kavita Yadav",
+      "imageUrl": "https://picsum.photos/seed/119/100/100",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "driver-10",
+      "description": "Avatar for Harpreet Kaur",
+      "imageUrl": "https://picsum.photos/seed/120/100/100",
+      "imageHint": "smiling woman"
     }
   ]
 }

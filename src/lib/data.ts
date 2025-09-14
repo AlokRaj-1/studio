@@ -58,4 +58,44 @@ export const drivers: Omit<Driver, 'lastSeen'>[] = [
     status: 'online',
     password: 'password',
   },
+  {
+    id: 'RJ14-CK7890',
+    name: 'Suresh Singh',
+    avatar: avatarMap.get('driver-6')!,
+    lastLocation: { lat: 26.9124, lng: 75.7873 }, // Jaipur
+    status: 'offline',
+    password: 'password',
+  },
+  {
+    id: 'GJ01-AB1234',
+    name: 'Meera Desai',
+    avatar: avatarMap.get('driver-7')!,
+    lastLocation: { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
+    status: 'online',
+    password: 'password',
+  },
+  {
+    id: 'AP28-CH5678',
+    name: 'Nikhil Kumar',
+    avatar: avatarMap.get('driver-8')!,
+    lastLocation: { lat: 17.3850, lng: 78.4867 }, // Hyderabad
+    status: 'inactive',
+    password: 'password',
+  },
+  {
+    id: 'UP32-LJ9012',
+    name: 'Kavita Yadav',
+    avatar: avatarMap.get('driver-9')!,
+    lastLocation: { lat: 26.8467, lng: 80.9462 }, // Lucknow
+    status: 'online',
+    password: 'password',
+  },
+  {
+    id: 'PB65-DE3456',
+    name: 'Harpreet Kaur',
+    avatar: avatarMap.get('driver-10')!,
+    lastLocation: { lat: 30.9010, lng: 75.8573 }, // Ludhiana
+    status: 'offline',
+    password: 'password',
+  },
 ];
