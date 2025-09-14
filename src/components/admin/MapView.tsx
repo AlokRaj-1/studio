@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,9 +20,8 @@ const osmProvider = (x: number, y: number, z: number): string => {
 };
 
 function RouteOverlay({ routePath, mapState }: { routePath: Point[], mapState: any }) {
-    if (!routePath || routePath.length < 2) return null;
+    if (!routePath || routePath.length < 2 || !mapState.width || !mapState.height) return null;
 
-    const { width, height } = mapState;
     const pathPoints = routePath.map(p => mapState.latLngToPixel(p)).filter(p => p);
 
     if (pathPoints.length < 2) return null;
@@ -29,7 +29,7 @@ function RouteOverlay({ routePath, mapState }: { routePath: Point[], mapState: a
     const pathD = "M" + pathPoints.map(p => `${p[0]},${p[1]}`).join(" L");
 
     return (
-        <svg width={width} height={height} style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+        <svg width={mapState.width} height={mapState.height} style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
             <path d={pathD} stroke="hsl(var(--primary))" strokeWidth="3" fill="none" strokeLinejoin="round" strokeLinecap="round" />
         </svg>
     );
@@ -39,7 +39,7 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
   const [center, setCenter] = useState<Point>([20.5937, 78.9629]); // Default to India
   const [zoom, setZoom] = useState(5);
   const [activeMarker, setActiveMarker] = useState<Driver | null>(null);
-  const [mapState, setMapState] = useState<any>(null);
+  const [mapState, setMapState] = useState<any>({ width: 0, height: 0, latLngToPixel: () => [0,0] });
 
   useEffect(() => {
     if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
@@ -76,17 +76,19 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
         provider={osmProvider}
         center={center}
         zoom={zoom}
-        onBoundsChanged={({ center, zoom, bounds }) => {
-          setCenter(center);
-          setZoom(zoom);
+        onBoundsChanged={(state) => {
+          setCenter(state.center);
+          setZoom(state.zoom);
+          setMapState(state);
         }}
-         onAnimationStop={({ center, zoom, bounds }) => {
-            setCenter(center);
-            setZoom(zoom);
+         onAnimationStop={(state) => {
+            setCenter(state.center);
+            setZoom(state.zoom);
+            setMapState(state);
         }}
         metaWheelZoom={true}
       >
-        {routePath && <RouteOverlay routePath={routePath} mapState={mapState} />}
+        <RouteOverlay routePath={routePath || []} mapState={mapState} />
         
         {busStops && busStops.map((stop, i) => (
             <Marker
@@ -136,15 +138,6 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
              </div>
            </Overlay>
         )}
-         <Overlay>
-            {/* This is a hacky way to get the internal map state for projection calculations */}
-            {(state: any) => {
-                if (mapState !== state) {
-                    setMapState(state);
-                }
-                return null;
-            }}
-        </Overlay>
       </Map>
     </div>
   );
