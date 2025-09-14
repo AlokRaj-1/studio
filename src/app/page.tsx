@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Bus } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -13,8 +13,14 @@ export default function Home() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col space-y-4 p-6">
-          <Link href="/driver" passHref>
+          <Link href="/tracker" passHref>
             <Button className="w-full justify-between h-14 text-lg" size="lg">
+              <span>Public Tracker</span>
+              <Bus />
+            </Button>
+          </Link>
+          <Link href="/driver" passHref>
+            <Button className="w-full justify-between h-14 text-lg" variant="secondary" size="lg">
               <span>Driver Interface</span>
               <ArrowRight />
             </Button>

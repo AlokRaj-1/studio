@@ -2,6 +2,7 @@
 
 import { analyzeHistoricalRoute, HistoricalRouteAnalysisInput } from '@/ai/flows/historical-route-analysis';
 import { getLocationCoordinates, LocationEditorInput } from '@/ai/flows/location-editor-flow';
+import { getETA, ETAInput } from '@/ai/flows/eta-flow';
 import { z } from 'zod';
 import { app } from '@/lib/firebase';
 import { getFirestore, collection, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -118,5 +119,27 @@ export async function editDriverLocation(data: z.infer<typeof locationEditorForm
         return { error: 'Permission denied. Make sure your Firestore security rules allow writes to the drivers collection.' };
     }
     return { error: 'An unexpected error occurred while updating the location.' };
+  }
+}
+
+const trackerFormSchema = z.object({
+  from: z.string().min(1, 'Please select a starting location.'),
+  to: z.string().min(1, 'Please select a destination.'),
+});
+
+export async function getRouteETA(data: z.infer<typeof trackerFormSchema>) {
+  try {
+    const validatedData = trackerFormSchema.safeParse(data);
+    if (!validatedData.success) {
+      return { error: 'Invalid input data.', details: validatedData.error.format() };
+    }
+
+    const etaInput: ETAInput = validatedData.data;
+    const result = await getETA(etaInput);
+    return { success: true, data: result };
+
+  } catch (error) {
+    console.error('Error in getRouteETA:', error);
+    return { error: 'An unexpected error occurred while calculating the ETA.' };
   }
 }
