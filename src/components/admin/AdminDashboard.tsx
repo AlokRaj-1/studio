@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -262,7 +263,7 @@ export function AdminDashboard() {
                   <CardTitle>Historical Route Analysis</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <HistoricalRouteTool drivers={drivers} />
+                  <HistoricalRouteTool drivers={drivers} onBack={() => handleTabChange('map')} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -275,7 +276,7 @@ export function AdminDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <LocationEditorTool drivers={drivers} />
+                  <LocationEditorTool drivers={drivers} onBack={() => handleTabChange('map')} />
                 </CardContent>
               </Card>
             </TabsContent>

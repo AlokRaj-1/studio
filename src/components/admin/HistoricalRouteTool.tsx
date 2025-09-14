@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { getHistoricalRouteAnalysis } from '@/app/actions';
 import { type HistoricalRouteAnalysisOutput } from '@/ai/flows/historical-route-analysis';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
@@ -40,9 +40,10 @@ const formSchema = z.object({
 
 type HistoricalRouteToolProps = {
   drivers: Driver[];
+  onBack: () => void;
 };
 
-export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
+export function HistoricalRouteTool({ drivers, onBack }: HistoricalRouteToolProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<HistoricalRouteAnalysisOutput | null>(null);
   const { toast } = useToast();
@@ -164,10 +165,16 @@ export function HistoricalRouteTool({ drivers }: HistoricalRouteToolProps) {
               )}
             />
           </div>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-            Analyze Route
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isLoading}>
+                {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                Analyze Route
+            </Button>
+            <Button type="button" variant="outline" onClick={onBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+            </Button>
+          </div>
         </form>
       </Form>
 

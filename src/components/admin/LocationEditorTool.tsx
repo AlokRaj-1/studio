@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { editDriverLocation } from '@/app/actions';
-import { LoaderCircle, MapPin, Send } from 'lucide-react';
+import { LoaderCircle, MapPin, Send, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { type Driver } from '@/lib/data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -34,9 +34,10 @@ const formSchema = z.object({
 
 type LocationEditorToolProps = {
   drivers: Driver[];
+  onBack: () => void;
 };
 
-export function LocationEditorTool({ drivers }: LocationEditorToolProps) {
+export function LocationEditorTool({ drivers, onBack }: LocationEditorToolProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{ driverId: string; description: string; } | null>(null);
   const { toast } = useToast();
@@ -121,10 +122,16 @@ export function LocationEditorTool({ drivers }: LocationEditorToolProps) {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Update Location
-          </Button>
+           <div className="flex gap-2">
+                <Button type="submit" disabled={isLoading}>
+                    {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    Update Location
+                </Button>
+                <Button type="button" variant="outline" onClick={onBack}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+            </div>
         </form>
       </Form>
 
