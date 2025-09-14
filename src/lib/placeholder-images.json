@@ -59,6 +59,12 @@
       "description": "Avatar for Harpreet Kaur",
       "imageUrl": "https://picsum.photos/seed/120/100/100",
       "imageHint": "smiling woman"
+    },
+    {
+      "id": "driver-11",
+      "description": "Avatar for Sanjay Patel",
+      "imageUrl": "https://picsum.photos/seed/121/100/100",
+      "imageHint": "man portrait"
     }
   ]
 }

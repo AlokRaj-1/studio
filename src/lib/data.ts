@@ -98,4 +98,12 @@ export const drivers: Omit<Driver, 'lastSeen'>[] = [
     status: 'offline',
     password: 'password',
   },
+  {
+    id: 'TS09-FG4321',
+    name: 'Sanjay Patel',
+    avatar: avatarMap.get('driver-11')!,
+    lastLocation: { lat: 17.4065, lng: 78.4772 }, // Hyderabad
+    status: 'online',
+    password: 'password',
+  },
 ];
