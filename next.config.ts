@@ -30,12 +30,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // This is to allow the Next.js dev server to be used in environments like Cloud Workstations
   experimental: {
-    // This is to allow the Next.js dev server to be used in environments like Cloud Workstations
-    allowedDevOrigins: [
-        'https://*.googleusercontent.com',
-    ]
-  }
+    //
+  },
+  allowedDevOrigins: ['https://*.googleusercontent.com'],
 };
 
 export default nextConfig;
