@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,7 +28,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { app } from '@/lib/firebase';
 import { getFirestore, collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
-import { getAuth, signOut } from 'firebase/auth';
 import { formatDistanceToNow } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
@@ -35,7 +35,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapView } from './MapView';
 
-const auth = getAuth(app);
 const db = getFirestore(app);
 
 const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
@@ -104,8 +103,8 @@ export function AdminDashboard() {
     window.history.pushState(null, '', `?tab=${value}`);
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
+  const handleLogout = () => {
+    sessionStorage.removeItem('isAdminLoggedIn');
     router.push('/admin/login');
   };
 

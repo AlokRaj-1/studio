@@ -1,46 +1,36 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
-import { app } from '@/lib/firebase';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-
-const auth = getAuth(app);
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    // We can only access sessionStorage on the client
+    const checkAuth = () => {
+      const adminLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+      setIsAuthenticated(adminLoggedIn);
       setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
-  useEffect(() => {
-    if (loading) return;
+      const isLoginPage = pathname === '/admin/login';
+      const isSeedPage = pathname === '/admin/seed';
 
-    const isAuthenticated = !!user;
-    const isLoginPage = pathname === '/admin/login';
-    const isSeedPage = pathname === '/admin/seed';
+      if (!isLoginPage && !isSeedPage && !adminLoggedIn) {
+        router.replace('/admin/login');
+      }
 
-    if (isLoginPage || isSeedPage) {
-        if(isAuthenticated) {
-            router.replace('/admin');
-        }
-        return;
-    }
-
-
-    if (!isAuthenticated) {
-      router.replace('/admin/login');
-    }
-  }, [user, loading, pathname, router]);
+      if ((isLoginPage || isSeedPage) && adminLoggedIn) {
+        router.replace('/admin');
+      }
+    };
+    checkAuth();
+  }, [pathname, router]);
 
   if (loading) {
     return (
@@ -49,21 +39,20 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
+  
   const isLoginPage = pathname === '/admin/login';
   const isSeedPage = pathname === '/admin/seed';
 
-  if ((isLoginPage || isSeedPage) && user) {
-     router.replace('/admin');
+  if (!isAuthenticated && !isLoginPage && !isSeedPage) {
      return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-background">
-            <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-        </div>
-     );
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  if (!isLoginPage && !isSeedPage && !user) {
-    return (
+  if (isAuthenticated && (isLoginPage || isSeedPage)) {
+     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
