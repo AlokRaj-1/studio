@@ -15,21 +15,12 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 // Initialize Firebase
-let app;
-let auth;
-let db;
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-try {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-  auth = getAuth(app);
-  db = getFirestore(app);
-} catch (e: any) {
-  console.error('Firebase initialization error:', e.message);
-   // Set to null if initialization fails to prevent further errors
-  app = null;
-  auth = null;
-  db = null;
+if (!app) {
+    console.error('Firebase initialization failed. Check your configuration.');
 }
-
 
 export { app, db, auth };
