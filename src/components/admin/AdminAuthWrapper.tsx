@@ -25,21 +25,44 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
 
     const isAuthenticated = !!user;
     const isLoginPage = pathname === '/admin/login';
+    const isSeedPage = pathname === '/admin/seed';
 
-    if (!isAuthenticated && !isLoginPage) {
+    if (isLoginPage || isSeedPage) return;
+
+
+    if (!isAuthenticated) {
       router.replace('/admin/login');
-    } else if (isAuthenticated && isLoginPage) {
-      router.replace('/admin');
     }
   }, [user, loading, pathname, router]);
 
-  if (loading || (!user && pathname !== '/admin/login') || (user && pathname === '/admin/login')) {
+  if (loading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
+
+  const isLoginPage = pathname === '/admin/login';
+  const isSeedPage = pathname === '/admin/seed';
+
+  if ((isLoginPage || isSeedPage) && user) {
+     router.replace('/admin');
+     return (
+        <div className="flex min-h-screen w-full items-center justify-center bg-background">
+            <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+        </div>
+     );
+  }
+
+  if (!isLoginPage && !isSeedPage && !user) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   return <>{children}</>;
 }
