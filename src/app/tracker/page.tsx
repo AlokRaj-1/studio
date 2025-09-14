@@ -99,11 +99,18 @@ export default function TrackerPage() {
         return;
       }
       const filtered = allRoutes.filter(liveRoute => {
-          const [from, to] = liveRoute.route.routeSummary.split(' to ');
-          const fromMatch = fromSearch ? from === fromSearch : true;
-          const toMatch = toSearch ? to === toSearch : true;
-          return fromMatch && toMatch;
+          const [routeFrom, routeTo] = liveRoute.route.routeSummary.split(' to ');
+          const stops = [routeFrom, ...liveRoute.route.busStops.map(s => s.name), routeTo];
+          
+          const fromIndex = fromSearch ? stops.findIndex(stop => stop === fromSearch) : 0;
+          const toIndex = toSearch ? stops.findIndex(stop => stop === toSearch) : stops.length - 1;
+
+          if (fromSearch && fromIndex === -1) return false;
+          if (toSearch && toIndex === -1) return false;
+
+          return fromIndex <= toIndex;
       });
+
       setFilteredRoutes(filtered);
       setSelectedRoute(filtered.length > 0 ? filtered[0] : null);
 
@@ -301,5 +308,7 @@ export default function TrackerPage() {
     </div>
   );
 }
+
+    
 
     
