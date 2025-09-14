@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { punjabCities } from '@/lib/cities';
-import { ArrowRight, Bus, Clock, LoaderCircle, MapIcon, RefreshCw, Route, Wind, MapPin } from 'lucide-react';
+import { ArrowRight, Bus, Clock, LoaderCircle, MapIcon, RefreshCw, Route, Wind, MapPin, Milestone } from 'lucide-react';
 import { MapView } from '@/components/admin/MapView';
 import type { Driver } from '@/lib/data';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
