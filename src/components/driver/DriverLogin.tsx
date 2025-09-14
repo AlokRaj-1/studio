@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { type Driver } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import Link from 'next/link';
 
 type DriverLoginProps = {
   onLogin: (driver: Driver) => void;
@@ -98,9 +99,12 @@ export function DriverLogin({ onLogin }: DriverLoginProps) {
         </div>
         {error && <p className="text-sm font-medium text-destructive">{error}</p>}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col gap-4">
         <Button type="submit" className="w-full">
           Login
+        </Button>
+        <Button variant="link" asChild>
+            <Link href="/admin">Go to Admin Dashboard</Link>
         </Button>
       </CardFooter>
     </form>

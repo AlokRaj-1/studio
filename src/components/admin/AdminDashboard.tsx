@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler } from 'lucide-react';
+import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler, ArrowRightLeft, LogOut } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -12,6 +12,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
+  SidebarFooter,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,7 +30,7 @@ import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore'
 import { formatDistanceToNow } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapView } from './MapView';
 
@@ -37,6 +39,7 @@ const avatarMap = new Map(PlaceHolderImages.map(img => [img.id, img]));
 
 export function AdminDashboard() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -46,10 +49,10 @@ export function AdminDashboard() {
 
   useEffect(() => {
     if (!db) {
-  setDrivers([]);
-  setLoading(false);
-  return;
-}
+      setDrivers([]);
+      setLoading(false);
+      return;
+    }
     const q = query(collection(db, 'drivers'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const driversData: Driver[] = [];
@@ -68,7 +71,9 @@ export function AdminDashboard() {
       });
       setDrivers(driversData);
       if (loading) {
-        setSelectedDriver(driversData[0] || null);
+        if (driversData.length > 0) {
+            setSelectedDriver(driversData[0] || null);
+        }
         setLoading(false);
       }
     }, (error) => {
@@ -94,6 +99,11 @@ export function AdminDashboard() {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.history.pushState(null, '', `?tab=${value}`);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('isAdminAuthenticated');
+    router.push('/admin/login');
   };
 
   return (
@@ -154,6 +164,25 @@ export function AdminDashboard() {
             )}
           </SidebarMenu>
         </SidebarContent>
+        <SidebarFooter>
+            <SidebarSeparator/>
+             <SidebarMenu>
+                <SidebarMenuItem>
+                    <Link href="/driver" className="w-full">
+                        <SidebarMenuButton tooltip="Switch to Driver View">
+                            <ArrowRightLeft/>
+                            <span>Switch to Driver View</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+                        <LogOut/>
+                        <span>Logout</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <div className="p-4 sm:p-6 lg:p-8">
