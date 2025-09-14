@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { punjabCities } from '@/lib/cities';
-import { ArrowRightLeft, Bus, Clock, LoaderCircle, MapIcon, Milestone, Route } from 'lucide-react';
+import { ArrowRightLeft, Bus, Clock, LoaderCircle, MapIcon, Milestone, Route, Wind, MapPin } from 'lucide-react';
 import { MapView } from '@/components/admin/MapView';
 import type { Driver } from '@/lib/data';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import type { Point } from 'pigeon-maps';
 
 const formSchema = z.object({
   from: z.string().min(1, 'Please select a starting city.'),
@@ -24,19 +25,26 @@ const formSchema = z.object({
   path: ["to"],
 });
 
+type BusStop = {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 type ETAResult = {
   etaMinutes: number;
   distanceKm: number;
   routeSummary: string;
+  avgSpeedKmph: number;
+  busStops: BusStop[];
+  routePath: Point[];
 }
 
 export default function TrackerPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ETAResult | null>(null);
-  const { toast } = useToast();
-
-  // Placeholder for a bus driver's data for the map
-  const [mockDriver] = useState<Driver>({
+  const [busPosition, setBusPosition] = useState<Point | null>(null);
+  const [mockDriver, setMockDriver] = useState<Driver>({
     id: 'PB01-BUS-001',
     name: 'Punjab Roadways',
     avatar: { id: 'driver-1', imageUrl: '', imageHint: 'bus', description: 'Bus' },
@@ -44,6 +52,7 @@ export default function TrackerPage() {
     lastSeen: new Date().toISOString(),
     status: 'online',
   });
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,9 +62,52 @@ export default function TrackerPage() {
     },
   });
 
+  useEffect(() => {
+    let animationFrameId: number;
+
+    if (result && result.routePath.length > 0) {
+      setBusPosition(result.routePath[0]);
+      const totalSteps = 500; // Number of steps for the animation loop
+      let step = 0;
+
+      const animate = () => {
+        const pathIndex = Math.floor((step / totalSteps) * (result.routePath.length - 1));
+        const nextPathIndex = Math.min(pathIndex + 1, result.routePath.length - 1);
+        
+        const start = result.routePath[pathIndex];
+        const end = result.routePath[nextPathIndex];
+        
+        const fraction = ((step % (totalSteps / (result.routePath.length -1))) / (totalSteps / (result.routePath.length - 1)));
+        
+        const lat = start[0] + (end[0] - start[0]) * fraction;
+        const lng = start[1] + (end[1] - start[1]) * fraction;
+        
+        const newBusPosition: Point = [lat, lng];
+        setBusPosition(newBusPosition);
+
+        setMockDriver(prev => ({
+          ...prev,
+          lastLocation: { lat: newBusPosition[0], lng: newBusPosition[1] }
+        }));
+        
+        step = (step + 1) % totalSteps;
+        animationFrameId = requestAnimationFrame(animate);
+      };
+      
+      animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [result]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
+    setBusPosition(null);
     try {
       const response = await getRouteETA(values);
       if (response.error) {
@@ -65,7 +117,12 @@ export default function TrackerPage() {
           description: response.error,
         });
       } else {
-        setResult(response.data);
+        const transformedData = {
+          ...response.data,
+          routePath: response.data.routePath.map((p: {lat: number, lng: number}) => [p.lat, p.lng]) as Point[],
+          busStops: response.data.busStops.map((bs: BusStop) => ({...bs}))
+        };
+        setResult(transformedData);
       }
     } catch (error) {
       toast({
@@ -77,6 +134,8 @@ export default function TrackerPage() {
       setIsLoading(false);
     }
   }
+  
+  const driversToShow = busPosition ? [{...mockDriver, lastLocation: {lat: busPosition[0], lng: busPosition[1]}}] : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -138,7 +197,7 @@ export default function TrackerPage() {
                 />
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}
-                  Get ETA
+                  Get Route & ETA
                 </Button>
               </form>
             </Form>
@@ -151,20 +210,41 @@ export default function TrackerPage() {
                 <CardTitle className="flex items-center gap-2"><Bus className="text-primary"/> Trip Estimate</CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                    <div className="flex items-center gap-2">
-                        <Clock className="text-muted-foreground" />
-                        <span className="font-medium">Estimated Time</span>
-                    </div>
-                    <span className="font-bold text-primary">{result.etaMinutes} min</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted col-span-2">
+                      <div className="flex items-center gap-2">
+                          <Clock className="text-muted-foreground" />
+                          <span className="font-medium">Estimated Time</span>
+                      </div>
+                      <span className="font-bold text-primary">{result.etaMinutes} min</span>
+                  </div>
+                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                      <div className="flex items-center gap-2">
+                          <Milestone className="text-muted-foreground" />
+                          <span className="font-medium">Distance</span>
+                      </div>
+                      <span className="font-bold text-primary">{result.distanceKm} km</span>
+                  </div>
+                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                      <div className="flex items-center gap-2">
+                          <Wind className="text-muted-foreground" />
+                          <span className="font-medium">Avg Speed</span>
+                      </div>
+                      <span className="font-bold text-primary">{result.avgSpeedKmph} km/h</span>
+                  </div>
                 </div>
-                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                    <div className="flex items-center gap-2">
-                        <Milestone className="text-muted-foreground" />
-                        <span className="font-medium">Distance</span>
-                    </div>
-                    <span className="font-bold text-primary">{result.distanceKm} km</span>
+
+                <div>
+                  <h4 className="font-semibold my-4 flex items-center gap-2"><MapPin className="text-muted-foreground"/> Major Stops</h4>
+                  <div className="border rounded-lg p-2 max-h-40 overflow-y-auto">
+                    <ul className="space-y-1">
+                      {result.busStops.map((stop, i) => (
+                        <li key={i} className="text-sm p-1 bg-background rounded">{stop.name}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
+
                 <Alert>
                     <Route className="h-4 w-4" />
                     <AlertTitle>Route Info</AlertTitle>
@@ -184,7 +264,12 @@ export default function TrackerPage() {
             <CardDescription>Real-time location of the bus on the route.</CardDescription>
           </CardHeader>
           <CardContent>
-            <MapView drivers={[mockDriver]} selectedDriver={mockDriver} />
+            <MapView 
+              drivers={driversToShow} 
+              selectedDriver={driversToShow[0]}
+              routePath={result?.routePath}
+              busStops={result?.busStops}
+            />
           </CardContent>
         </Card>
       </div>

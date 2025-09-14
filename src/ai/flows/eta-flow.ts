@@ -22,6 +22,16 @@ const ETAOutputSchema = z.object({
     etaMinutes: z.number().describe('The estimated time of arrival in minutes.'),
     distanceKm: z.number().describe('The estimated distance of the route in kilometers.'),
     routeSummary: z.string().describe('A brief summary of the suggested route.'),
+    avgSpeedKmph: z.number().describe('The estimated average speed in kilometers per hour.'),
+    busStops: z.array(z.object({
+        name: z.string().describe('The name of the bus stop.'),
+        lat: z.number().describe('The latitude of the bus stop.'),
+        lng: z.number().describe('The longitude of the bus stop.'),
+    })).describe('An array of major bus stops along the route.'),
+    routePath: z.array(z.object({
+        lat: z.number().describe('The latitude of a point on the route.'),
+        lng: z.number().describe('The longitude of a point on the route.'),
+    })).describe('An array of points that form the route path for drawing on a map.'),
 });
 
 export type ETAOutput = z.infer<typeof ETAOutputSchema>;
@@ -41,7 +51,7 @@ const prompt = ai.definePrompt({
   From: "{{from}}"
   To: "{{to}}"
 
-  Provide the ETA in minutes, the distance in kilometers, and a short summary of the route.
+  Provide the ETA in minutes, the distance in kilometers, a short summary of the route, the average speed in km/h, a list of 5-7 major bus stops with their coordinates, and a detailed route path with at least 15-20 coordinates to draw on a map.
   Ensure the output is formatted as a JSON object matching the ETAOutputSchema.
 `,
 });
