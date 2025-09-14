@@ -29,7 +29,7 @@ type ETAResult = {
 
 type LiveRoute = {
   driver: Driver;
-  route: ETAResult;
+  route?: ETAResult;
 };
 
 export default function TrackerPage() {
@@ -56,42 +56,75 @@ export default function TrackerPage() {
         });
         return;
       }
-
-      const routePromises = drivers.map(async (driver) => {
-        try {
-          const fromCity = punjabCities[Math.floor(Math.random() * punjabCities.length)];
-          const toCity = punjabCities.filter(c => c !== fromCity)[Math.floor(Math.random() * (punjabCities.length -1))];
-          
-          const response = await getRouteETA({ from: fromCity, to: toCity });
-
-          if (response.success && response.data) {
-            const liveIndex = Math.floor(response.data.routePath.length / 2);
-            const liveLocation = response.data.routePath[liveIndex];
-            
-            return {
-              driver: {...driver, lastLocation: liveLocation},
-              route: {...response.data, routeSummary: `${fromCity} to ${toCity}`} ,
-            };
-          }
-        } catch (e) {
-          console.error("Failed to generate route for driver", driver.id, e);
-        }
-        return null;
-      });
-
-      const results = (await Promise.all(routePromises)).filter((r): r is LiveRoute => r !== null);
       
-      setAllRoutes(results);
-      setFilteredRoutes(results);
-      if (results.length > 0) {
-        setSelectedRoute(results[0]);
+      const initialLiveRoutes: LiveRoute[] = drivers.map(driver => ({ driver }));
+      setAllRoutes(initialLiveRoutes);
+      setFilteredRoutes(initialLiveRoutes);
+      if (initialLiveRoutes.length > 0) {
+        setSelectedRoute(initialLiveRoutes[0]);
+        // Eagerly show the first bus, then generate its route
+        generateRouteForBus(initialLiveRoutes[0].driver.id);
       }
+      
+      // Generate routes for all buses in the background
+      initialLiveRoutes.forEach(lr => generateRouteForBus(lr.driver.id));
     });
   };
+  
+  const generateRouteForBus = async (driverId: string) => {
+    try {
+        const fromCity = punjabCities[Math.floor(Math.random() * punjabCities.length)];
+        const toCity = punjabCities.filter(c => c !== fromCity)[Math.floor(Math.random() * (punjabCities.length - 1))];
+
+        const response = await getRouteETA({ from: fromCity, to: toCity });
+
+        if (response.success && response.data) {
+            const liveIndex = Math.floor(response.data.routePath.length / 2);
+            const liveLocation = response.data.routePath[liveIndex];
+
+            const newRoute: ETAResult = { ...response.data, routeSummary: `${fromCity} to ${toCity}` };
+
+            setAllRoutes(prev => prev.map(lr => 
+                lr.driver.id === driverId 
+                ? { ...lr, route: newRoute, driver: { ...lr.driver, lastLocation: liveLocation } } 
+                : lr
+            ));
+             setFilteredRoutes(prev => prev.map(lr => 
+                lr.driver.id === driverId 
+                ? { ...lr, route: newRoute, driver: { ...lr.driver, lastLocation: liveLocation } } 
+                : lr
+            ));
+        } else {
+            throw new Error(response.error || "Failed to generate route");
+        }
+    } catch (e) {
+        console.error("Failed to generate route for driver", driverId, e);
+        // The bus remains in the list, just without a route.
+    }
+  }
+
 
   useEffect(() => {
     fetchLiveRoutes();
   }, []);
+  
+  useEffect(() => {
+    // If the selected route is updated in the main list, update the selected state as well
+    if (selectedRoute) {
+        const updatedSelected = allRoutes.find(r => r.driver.id === selectedRoute.driver.id);
+        if (updatedSelected) {
+            setSelectedRoute(updatedSelected);
+        }
+    }
+  }, [allRoutes, selectedRoute?.driver.id]);
+  
+  const handleSelectRoute = (liveRoute: LiveRoute) => {
+    setSelectedRoute(liveRoute);
+    if (!liveRoute.route) {
+        // If route hasn't been generated yet, trigger it now.
+        generateRouteForBus(liveRoute.driver.id);
+    }
+  }
 
   const handleSearch = () => {
       if (!fromSearch && !toSearch) {
@@ -99,6 +132,7 @@ export default function TrackerPage() {
         return;
       }
       const filtered = allRoutes.filter(liveRoute => {
+          if (!liveRoute.route) return false; // Can't filter if route doesn't exist yet
           const [routeFrom, routeTo] = liveRoute.route.routeSummary.split(' to ');
           const stops = [routeFrom, ...liveRoute.route.busStops.map(s => s.name), routeTo];
           
@@ -112,9 +146,10 @@ export default function TrackerPage() {
       });
 
       setFilteredRoutes(filtered);
-      setSelectedRoute(filtered.length > 0 ? filtered[0] : null);
-
-      if (filtered.length === 0) {
+      if (filtered.length > 0) {
+        handleSelectRoute(filtered[0]);
+      } else {
+        setSelectedRoute(null);
         toast({
             variant: "default",
             title: "No Matching Buses",
@@ -133,7 +168,7 @@ export default function TrackerPage() {
   };
 
 
-  const routePathForMap = selectedRoute?.route.routePath.map(p => [p.lat, p.lng] as Point);
+  const routePathForMap = selectedRoute?.route?.routePath.map(p => [p.lat, p.lng] as Point);
   const driverForMap = selectedRoute ? [selectedRoute.driver] : [];
   
   return (
@@ -198,7 +233,7 @@ export default function TrackerPage() {
                     <Bus className="h-4 w-4" />
                     <AlertTitle>No buses found</AlertTitle>
                     <AlertDescription>
-                        There are no active buses for the selected criteria.
+                        There are no active buses online right now.
                     </AlertDescription>
                 </Alert>
             )}
@@ -209,7 +244,7 @@ export default function TrackerPage() {
                     "cursor-pointer hover:border-primary transition-colors",
                     selectedRoute?.driver.id === liveRoute.driver.id && "border-primary ring-2 ring-primary"
                 )}
-                onClick={() => setSelectedRoute(liveRoute)}
+                onClick={() => handleSelectRoute(liveRoute)}
               >
                 <CardContent className="p-4 flex items-center gap-4">
                     <Avatar className="h-12 w-12">
@@ -223,9 +258,17 @@ export default function TrackerPage() {
                         </div>
                         <p className="text-sm text-muted-foreground">{liveRoute.driver.id}</p>
                         <div className="flex items-center gap-2 text-sm mt-1">
-                            <span>{liveRoute.route.routeSummary.split(' to ')[0]}</span>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground"/>
-                            <span>{liveRoute.route.routeSummary.split(' to ')[1]}</span>
+                          {liveRoute.route ? (
+                            <>
+                                <span>{liveRoute.route.routeSummary.split(' to ')[0]}</span>
+                                <ArrowRight className="h-4 w-4 text-muted-foreground"/>
+                                <span>{liveRoute.route.routeSummary.split(' to ')[1]}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground text-xs flex items-center gap-1">
+                                <LoaderCircle className="h-3 w-3 animate-spin"/> Generating route...
+                            </span>
+                          )}
                         </div>
                     </div>
                 </CardContent>
@@ -257,11 +300,11 @@ export default function TrackerPage() {
               drivers={driverForMap}
               selectedDriver={selectedRoute?.driver ?? null}
               routePath={routePathForMap}
-              busStops={selectedRoute?.route.busStops}
+              busStops={selectedRoute?.route?.busStops}
             />
           </CardContent>
         </Card>
-        {selectedRoute && (
+        {selectedRoute?.route && (
              <Card className="shadow-lg mt-8 animate-in fade-in">
              <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Route className="text-primary"/> Trip Estimate</CardTitle>
@@ -304,7 +347,20 @@ export default function TrackerPage() {
              </CardContent>
           </Card>
         )}
+         {selectedRoute && !selectedRoute.route && !isPending && (
+             <Card className="shadow-lg mt-8 animate-in fade-in">
+             <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Route className="text-primary"/> Trip Estimate</CardTitle>
+             </CardHeader>
+             <CardContent className="flex items-center justify-center p-8 gap-2 text-muted-foreground">
+                <LoaderCircle className="h-5 w-5 animate-spin" />
+                <span>Calculating route details...</span>
+             </CardContent>
+          </Card>
+         )}
       </div>
     </div>
   );
 }
+
+    
