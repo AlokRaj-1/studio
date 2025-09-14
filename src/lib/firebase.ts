@@ -1,5 +1,3 @@
-'use client';
-
 import { initializeApp, getApp, getApps, FirebaseOptions } from 'firebase/app';
 
 const firebaseConfig: FirebaseOptions = {

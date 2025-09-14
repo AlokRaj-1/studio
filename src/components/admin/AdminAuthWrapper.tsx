@@ -29,7 +29,12 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
     const isLoginPage = pathname === '/admin/login';
     const isSeedPage = pathname === '/admin/seed';
 
-    if (isLoginPage || isSeedPage) return;
+    if (isLoginPage || isSeedPage) {
+        if(isAuthenticated) {
+            router.replace('/admin');
+        }
+        return;
+    }
 
 
     if (!isAuthenticated) {
