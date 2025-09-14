@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
@@ -6,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { punjabCities } from '@/lib/cities';
-import { ArrowRight, Bus, Clock, LoaderCircle, MapIcon, RefreshCw, Route, Wind, MapPin, Milestone } from 'lucide-react';
+import { ArrowRight, Bus, Clock, LoaderCircle, MapIcon, RefreshCw, Route, Wind, MapPin, Milestone, Search, X } from 'lucide-react';
 import { MapView } from '@/components/admin/MapView';
 import type { Driver } from '@/lib/data';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type ETAResult = {
   etaMinutes: number;
@@ -32,13 +34,17 @@ type LiveRoute = {
 
 export default function TrackerPage() {
   const [isPending, startTransition] = useTransition();
-  const [routes, setRoutes] = useState<LiveRoute[]>([]);
+  const [allRoutes, setAllRoutes] = useState<LiveRoute[]>([]);
+  const [filteredRoutes, setFilteredRoutes] = useState<LiveRoute[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<LiveRoute | null>(null);
+  const [fromSearch, setFromSearch] = useState('');
+  const [toSearch, setToSearch] = useState('');
   const { toast } = useToast();
 
   const fetchLiveRoutes = () => {
     startTransition(async () => {
-      setRoutes([]);
+      setAllRoutes([]);
+      setFilteredRoutes([]);
       setSelectedRoute(null);
 
       const { drivers } = await getActiveDrivers();
@@ -51,7 +57,6 @@ export default function TrackerPage() {
         return;
       }
 
-      // For each driver, generate a route with AI
       const routePromises = drivers.map(async (driver) => {
         try {
           const fromCity = punjabCities[Math.floor(Math.random() * punjabCities.length)];
@@ -60,7 +65,6 @@ export default function TrackerPage() {
           const response = await getRouteETA({ from: fromCity, to: toCity });
 
           if (response.success && response.data) {
-             // Fake the live location to be somewhere along the generated path
             const liveIndex = Math.floor(response.data.routePath.length / 2);
             const liveLocation = response.data.routePath[liveIndex];
             
@@ -77,7 +81,8 @@ export default function TrackerPage() {
 
       const results = (await Promise.all(routePromises)).filter((r): r is LiveRoute => r !== null);
       
-      setRoutes(results);
+      setAllRoutes(results);
+      setFilteredRoutes(results);
       if (results.length > 0) {
         setSelectedRoute(results[0]);
       }
@@ -88,13 +93,83 @@ export default function TrackerPage() {
     fetchLiveRoutes();
   }, []);
 
-  const routePathForMap = selectedRoute?.route.routePath.map(p => [p.lat, p.lng] as Point);
+  const handleSearch = () => {
+      if (!fromSearch && !toSearch) {
+        setFilteredRoutes(allRoutes);
+        return;
+      }
+      const filtered = allRoutes.filter(liveRoute => {
+          const [from, to] = liveRoute.route.routeSummary.split(' to ');
+          const fromMatch = fromSearch ? from === fromSearch : true;
+          const toMatch = toSearch ? to === toSearch : true;
+          return fromMatch && toMatch;
+      });
+      setFilteredRoutes(filtered);
+      setSelectedRoute(filtered.length > 0 ? filtered[0] : null);
 
+      if (filtered.length === 0) {
+        toast({
+            variant: "default",
+            title: "No Matching Buses",
+            description: "No active buses found for the selected route. Try clearing the search.",
+        });
+      }
+  };
+
+  const clearSearch = () => {
+    setFromSearch('');
+    setToSearch('');
+    setFilteredRoutes(allRoutes);
+    if(allRoutes.length > 0) {
+        setSelectedRoute(allRoutes[0]);
+    }
+  };
+
+
+  const routePathForMap = selectedRoute?.route.routePath.map(p => [p.lat, p.lng] as Point);
   const driverForMap = selectedRoute ? [selectedRoute.driver] : [];
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1 space-y-8">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Search className="text-primary"/> Find Your Bus</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <div className="space-y-2">
+                    <label className="text-sm font-medium">From</label>
+                    <Select value={fromSearch} onValueChange={setFromSearch}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select starting point" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {punjabCities.map(city => (
+                                <SelectItem key={`from-${city}`} value={city}>{city}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-sm font-medium">To</label>
+                     <Select value={toSearch} onValueChange={setToSearch}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select destination" />
+                        </SelectTrigger>
+                        <SelectContent>
+                             {punjabCities.map(city => (
+                                <SelectItem key={`to-${city}`} value={city}>{city}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
+                 <div className="flex gap-2">
+                    <Button onClick={handleSearch} className="w-full"><Search/>Search</Button>
+                    <Button onClick={clearSearch} variant="outline" className="w-full"><X/>Clear</Button>
+                 </div>
+            </CardContent>
+        </Card>
+        
         <Card className="shadow-lg">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -106,21 +181,21 @@ export default function TrackerPage() {
             <CardDescription>Click on a bus to see its live location and route.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 max-h-[65vh] overflow-y-auto">
-             {isPending && routes.length === 0 && (
+             {isPending && filteredRoutes.length === 0 && (
                 Array.from({length: 3}).map((_, i) => (
                     <Skeleton key={i} className="h-24 w-full" />
                 ))
              )}
-            {!isPending && routes.length === 0 && (
+            {!isPending && filteredRoutes.length === 0 && (
                 <Alert>
                     <Bus className="h-4 w-4" />
-                    <AlertTitle>No buses online</AlertTitle>
+                    <AlertTitle>No buses found</AlertTitle>
                     <AlertDescription>
-                        There are no active buses to display right now.
+                        There are no active buses for the selected criteria.
                     </AlertDescription>
                 </Alert>
             )}
-            {routes.map((liveRoute) => (
+            {filteredRoutes.map((liveRoute) => (
               <Card 
                 key={liveRoute.driver.id} 
                 className={cn(
@@ -226,3 +301,5 @@ export default function TrackerPage() {
     </div>
   );
 }
+
+    
