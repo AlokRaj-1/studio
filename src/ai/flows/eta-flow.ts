@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { getDirections } from '../tools/get-directions';
 
 const ETAInputSchema = z.object({
   from: z.string().describe('The starting location, e.g., a city name.'),
@@ -28,11 +27,11 @@ const ETAOutputSchema = z.object({
         name: z.string().describe('The name of the bus stop.'),
         lat: z.number().describe('The latitude of the bus stop.'),
         lng: z.number().describe('The longitude of the bus stop.'),
-    })).describe('An array of major bus stops along the route.'),
+    })).describe('An array of 5-7 major bus stops along the route.'),
     routePath: z.array(z.object({
         lat: z.number().describe('The latitude of a point on the route.'),
         lng: z.number().describe('The longitude of a point on the route.'),
-    })).describe('An array of points that form the route path for drawing on a map.'),
+    })).describe('An array of 20-30 points that form a plausible route path for drawing on a map.'),
 });
 
 export type ETAOutput = z.infer<typeof ETAOutputSchema>;
@@ -45,15 +44,19 @@ const prompt = ai.definePrompt({
   name: 'etaPrompt',
   input: {schema: ETAInputSchema},
   output: {schema: ETAOutputSchema},
-  tools: [getDirections],
-  prompt: `You are an expert Punjabi travel assistant. Your task is to provide route details for a bus trip between two locations in Punjab, India.
+  prompt: `You are an expert Punjabi travel assistant and route planner. Your task is to generate a plausible and detailed bus route between two locations in Punjab, India.
 
-  Use the attached getDirections tool to get the primary route information. Then, based on the route summary provided by the tool, identify 5-7 major towns or cities that would serve as bus stops. Provide their coordinates.
+  You must generate all data yourself based on your knowledge. Do not use any tools.
 
   From: "{{from}}"
   To: "{{to}}"
 
-  Finally, assemble all the information into the ETAOutputSchema format. Calculate the average speed based on the distance and duration from the tool.
+  1.  **Estimate Route:** Determine a realistic distance in kilometers and a plausible travel time in minutes for a bus.
+  2.  **Calculate Speed:** Based on the distance and time, calculate the average speed in km/h.
+  3.  **Identify Major Stops:** Identify 5-7 major towns or cities that would serve as bus stops along this route. Provide their names and approximate geographic coordinates (latitude and longitude).
+  4.  **Generate Route Path:** Create a detailed route path consisting of 20-30 latitude and longitude points. This path should represent a realistic road route between the start and end points, passing near your identified bus stops.
+  5.  **Create Summary:** Write a brief, one-sentence summary of the main highway or roads the route would likely follow.
+  6.  **Assemble Output:** Format all of this information into the ETAOutputSchema JSON object.
 `,
 });
 
