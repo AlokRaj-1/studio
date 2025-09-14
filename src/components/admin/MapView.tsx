@@ -22,7 +22,7 @@ const osmProvider = (x: number, y: number, z: number): string => {
 function RouteOverlay({ routePath, mapState }: { routePath: Point[], mapState: any }) {
     if (!routePath || routePath.length < 2 || !mapState.width || !mapState.height || !mapState.latLngToPixel) return null;
 
-    const pathPoints = routePath.map(p => mapState.latLngToPixel(p)).filter(Boolean);
+    const pathPoints = routePath.map(p => mapState.latLngToPixel(p)).filter(p => p);
 
     if (pathPoints.length < 2) return null;
 
@@ -48,7 +48,7 @@ const getBounds = (points: Point[]) => {
 };
 
 // Function to calculate the zoom level from a bounding box
-const getZoom = (bounds: ReturnType<typeof getBounds>, mapDimensions: { width: number, height: number }) => {
+function getZoom(bounds: ReturnType<typeof getBounds>, mapDimensions: { width: number, height: number }) {
   const WORLD_DIM = { height: 256, width: 256 };
   const ZOOM_MAX = 21;
 
@@ -59,6 +59,7 @@ const getZoom = (bounds: ReturnType<typeof getBounds>, mapDimensions: { width: n
   }
 
   function zoom(mapPx: number, worldPx: number, fraction: number) {
+    if (fraction === 0) return ZOOM_MAX;
     return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
   }
 
@@ -69,47 +70,46 @@ const getZoom = (bounds: ReturnType<typeof getBounds>, mapDimensions: { width: n
 
   const latZoom = zoom(mapDimensions.height, WORLD_DIM.height, latFraction);
   const lngZoom = zoom(mapDimensions.width, WORLD_DIM.width, lngFraction);
-
-  return Math.min(latZoom, lngZoom, ZOOM_MAX) - 1; // Subtract 1 for padding
+  
+  return Math.min(latZoom, lngZoom, ZOOM_MAX) -1; // Subtract 1 for padding
 };
 
 
 export function MapView({ drivers, selectedDriver, routePath, busStops }: MapViewProps) {
-  const [center, setCenter] = useState<Point>([20.5937, 78.9629]); // Default to India
-  const [zoom, setZoom] = useState(5);
+  const [center, setCenter] = useState<Point>([31.1471, 75.3412]); // Punjab
+  const [zoom, setZoom] = useState(7);
   const [activeMarker, setActiveMarker] = useState<Driver | null>(null);
   const [mapState, setMapState] = useState<any>({ width: 0, height: 0, latLngToPixel: () => [0,0] });
 
   useEffect(() => {
     // This effect runs when the map needs to be updated due to external prop changes
-    if (routePath && routePath.length > 0) {
-        if (mapState.width > 0 && mapState.height > 0) {
-            const bounds = getBounds(routePath);
-            const newZoom = getZoom(bounds, { width: mapState.width, height: mapState.height });
-            const newCenter: Point = [(bounds.minLat + bounds.maxLat) / 2, (bounds.minLng + bounds.maxLng) / 2];
-            
-            if (newCenter[0] !== center[0] || newCenter[1] !== center[1] || newZoom !== zoom) {
-                setCenter(newCenter);
-                setZoom(newZoom);
-            }
-        }
+    if (routePath && routePath.length > 0 && mapState.width > 0 && mapState.height > 0) {
+        const bounds = getBounds(routePath);
+        const newZoom = getZoom(bounds, { width: mapState.width, height: mapState.height });
+        const newCenter: Point = [(bounds.minLat + bounds.maxLat) / 2, (bounds.minLng + bounds.maxLng) / 2];
+        
+        setCenter(newCenter);
+        setZoom(newZoom);
+
     } else if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
-      if (center[0] !== selectedDriver.lastLocation.lat || center[1] !== selectedDriver.lastLocation.lng) {
-        setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
-        setZoom(13);
-      }
-    } else {
-      // Default view if no route or selected driver
-      setCenter([20.5937, 78.9629]);
-      setZoom(5);
+      setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
+      setZoom(13);
+    } else if (!selectedDriver && drivers.length > 0 && drivers[0].lastLocation.lat !== 0) {
+       setCenter([drivers[0].lastLocation.lat, drivers[0].lastLocation.lng]);
+       setZoom(13);
     }
-  }, [selectedDriver, routePath, mapState.width, mapState.height]);
+     else {
+      // Default view if no route or selected driver
+      setCenter([31.1471, 75.3412]); // Punjab
+      setZoom(7);
+    }
+  }, [selectedDriver, routePath, mapState.width, mapState.height, drivers]);
 
   const handleMapChange = (state: any) => {
     if (state) {
-      setCenter(state.center);
-      setZoom(state.zoom);
-      setMapState(state);
+        setCenter(state.center);
+        setZoom(state.zoom);
+        setMapState(state);
     }
   };
 
@@ -123,7 +123,7 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
         onAnimationStop={handleMapChange}
         metaWheelZoom={true}
       >
-        <RouteOverlay routePath={routePath || []} mapState={mapState} />
+        {routePath && <RouteOverlay routePath={routePath} mapState={mapState} />}
         
         {busStops && busStops.map((stop, i) => (
             <Marker
@@ -166,7 +166,7 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
                       ? activeMarker.lastSeen
                       : activeMarker.lastSeen?.toDate
                         ? activeMarker.lastSeen.toDate().toLocaleString()
-                        : ''
+                        : 'never'
                   }
                 </p>
              </div>

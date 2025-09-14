@@ -5,8 +5,9 @@ import { getLocationCoordinates, LocationEditorInput } from '@/ai/flows/location
 import { getETA, ETAInput } from '@/ai/flows/eta-flow';
 import { z } from 'zod';
 import { app } from '@/lib/firebase';
-import { getFirestore, collection, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, serverTimestamp, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Driver } from '@/lib/data';
 
 const db = getFirestore(app);
 
@@ -141,5 +142,28 @@ export async function getRouteETA(data: z.infer<typeof trackerFormSchema>) {
   } catch (error) {
     console.error('Error in getRouteETA:', error);
     return { error: 'An unexpected error occurred while calculating the ETA.' };
+  }
+}
+
+export async function getActiveDrivers(): Promise<{ drivers: Driver[] }> {
+  try {
+    const q = query(collection(db, 'drivers'), where('status', '==', 'online'));
+    const querySnapshot = await getDocs(q);
+    const drivers: Driver[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      drivers.push({
+        id: doc.id,
+        name: data.name,
+        avatar: data.avatar,
+        lastLocation: data.lastLocation,
+        status: data.status,
+        lastSeen: data.lastSeen.toDate().toISOString(),
+      });
+    });
+    return { drivers };
+  } catch (error) {
+    console.error('Error fetching active drivers:', error);
+    return { drivers: [] };
   }
 }

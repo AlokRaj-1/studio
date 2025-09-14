@@ -1,188 +1,211 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { getRouteETA } from '@/app/actions';
+import { useState, useEffect, useTransition } from 'react';
+import { getRouteETA, getActiveDrivers } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { punjabCities } from '@/lib/cities';
-import { ArrowRightLeft, Bus, Clock, LoaderCircle, MapIcon, Milestone, Route, Wind, MapPin } from 'lucide-react';
+import { ArrowRight, Bus, Clock, LoaderCircle, MapIcon, RefreshCw, Route, Wind, MapPin } from 'lucide-react';
 import { MapView } from '@/components/admin/MapView';
 import type { Driver } from '@/lib/data';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import type { Point } from 'pigeon-maps';
-
-const formSchema = z.object({
-  from: z.string().min(1, 'Please select a starting city.'),
-  to: z.string().min(1, 'Please select a destination city.'),
-}).refine(data => data.from !== data.to, {
-  message: "From and To cities cannot be the same.",
-  path: ["to"],
-});
-
-type BusStop = {
-  name: string;
-  lat: number;
-  lng: number;
-}
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ETAResult = {
   etaMinutes: number;
   distanceKm: number;
   routeSummary: string;
   avgSpeedKmph: number;
-  busStops: BusStop[];
+  busStops: { name: string; lat: number; lng: number }[];
   routePath: { lat: number, lng: number }[];
 }
 
+type LiveRoute = {
+  driver: Driver;
+  route: ETAResult;
+};
+
 export default function TrackerPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ETAResult | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [routes, setRoutes] = useState<LiveRoute[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState<LiveRoute | null>(null);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      from: '',
-      to: '',
-    },
-  });
+  const fetchLiveRoutes = () => {
+    startTransition(async () => {
+      setRoutes([]);
+      setSelectedRoute(null);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    setResult(null);
-    try {
-      const response = await getRouteETA(values);
-      if (response.error || !response.data) {
+      const { drivers } = await getActiveDrivers();
+
+      if (drivers.length === 0) {
         toast({
-          variant: "destructive",
-          title: "Calculation Failed",
-          description: response.error || "Could not retrieve route data.",
+          title: "No Active Buses",
+          description: "There are currently no buses online. Please check back later.",
         });
-      } else {
-        setResult(response.data);
+        return;
       }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred.",
+
+      // For each driver, generate a route with AI
+      const routePromises = drivers.map(async (driver) => {
+        try {
+          const fromCity = punjabCities[Math.floor(Math.random() * punjabCities.length)];
+          const toCity = punjabCities.filter(c => c !== fromCity)[Math.floor(Math.random() * (punjabCities.length -1))];
+          
+          const response = await getRouteETA({ from: fromCity, to: toCity });
+
+          if (response.success && response.data) {
+             // Fake the live location to be somewhere along the generated path
+            const liveIndex = Math.floor(response.data.routePath.length / 2);
+            const liveLocation = response.data.routePath[liveIndex];
+            
+            return {
+              driver: {...driver, lastLocation: liveLocation},
+              route: {...response.data, routeSummary: `${fromCity} to ${toCity}`} ,
+            };
+          }
+        } catch (e) {
+          console.error("Failed to generate route for driver", driver.id, e);
+        }
+        return null;
       });
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
-  const routePathForMap = result?.routePath ? result.routePath.map(p => [p.lat, p.lng] as Point) : undefined;
+      const results = (await Promise.all(routePromises)).filter((r): r is LiveRoute => r !== null);
+      
+      setRoutes(results);
+      if (results.length > 0) {
+        setSelectedRoute(results[0]);
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchLiveRoutes();
+  }, []);
+
+  const routePathForMap = selectedRoute?.route.routePath.map(p => [p.lat, p.lng] as Point);
+
+  const driverForMap = selectedRoute ? [selectedRoute.driver] : [];
   
-  const startBus: Driver | null = result?.routePath?.[0] ? {
-      id: 'live-bus',
-      name: 'Your Bus',
-      avatar: { id: 'bus', imageUrl: '', imageHint: 'bus icon', description: 'Live bus' },
-      lastLocation: result.routePath[0],
-      status: 'online',
-      lastSeen: new Date().toISOString(),
-  } : null;
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1 space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Route className="text-primary"/> Plan Your Trip</CardTitle>
-            <CardDescription>Select your start and end points to get an ETA.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="from"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a starting city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {punjabCities.map(city => (
-                            <SelectItem key={`from-${city}`} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-center">
-                    <ArrowRightLeft className="text-muted-foreground"/>
-                </div>
-                <FormField
-                  control={form.control}
-                  name="to"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>To</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a destination city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {punjabCities.map(city => (
-                            <SelectItem key={`to-${city}`} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}
-                  Get Route & ETA
+            <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><Bus className="text-primary"/> Active Buses</CardTitle>
+                <Button variant="ghost" size="icon" onClick={fetchLiveRoutes} disabled={isPending}>
+                    <RefreshCw className={cn("h-5 w-5", isPending && "animate-spin")}/>
                 </Button>
-              </form>
-            </Form>
+            </div>
+            <CardDescription>Click on a bus to see its live location and route.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 max-h-[65vh] overflow-y-auto">
+             {isPending && routes.length === 0 && (
+                Array.from({length: 3}).map((_, i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                ))
+             )}
+            {!isPending && routes.length === 0 && (
+                <Alert>
+                    <Bus className="h-4 w-4" />
+                    <AlertTitle>No buses online</AlertTitle>
+                    <AlertDescription>
+                        There are no active buses to display right now.
+                    </AlertDescription>
+                </Alert>
+            )}
+            {routes.map((liveRoute) => (
+              <Card 
+                key={liveRoute.driver.id} 
+                className={cn(
+                    "cursor-pointer hover:border-primary transition-colors",
+                    selectedRoute?.driver.id === liveRoute.driver.id && "border-primary ring-2 ring-primary"
+                )}
+                onClick={() => setSelectedRoute(liveRoute)}
+              >
+                <CardContent className="p-4 flex items-center gap-4">
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src={liveRoute.driver.avatar.imageUrl} alt={liveRoute.driver.name} data-ai-hint={liveRoute.driver.avatar.imageHint} />
+                        <AvatarFallback>{liveRoute.driver.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-grow">
+                        <div className="flex items-center justify-between">
+                            <p className="font-semibold">{liveRoute.driver.name}</p>
+                            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Online</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{liveRoute.driver.id}</p>
+                        <div className="flex items-center gap-2 text-sm mt-1">
+                            <span>{liveRoute.route.routeSummary.split(' to ')[0]}</span>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground"/>
+                            <span>{liveRoute.route.routeSummary.split(' to ')[1]}</span>
+                        </div>
+                    </div>
+                </CardContent>
+              </Card>
+            ))}
           </CardContent>
         </Card>
+      </div>
 
-        {result && (
-          <Card className="shadow-lg animate-in fade-in">
+      <div className="lg:col-span-2">
+        <Card className="shadow-lg">
+          <CardHeader>
+             {selectedRoute ? (
+                <>
+                <CardTitle className="flex items-center gap-2"><MapIcon className="text-primary"/> Route for {selectedRoute.driver.name}</CardTitle>
+                <CardDescription>
+                    Showing live location for bus <span className="font-semibold">{selectedRoute.driver.id}</span>
+                </CardDescription>
+                </>
+             ) : (
+                <>
+                <CardTitle className="flex items-center gap-2"><MapIcon className="text-primary"/> Live Bus Map</CardTitle>
+                <CardDescription>Select a bus from the list to see its route.</CardDescription>
+                </>
+             )}
+          </CardHeader>
+          <CardContent>
+            <MapView 
+              drivers={driverForMap}
+              selectedDriver={selectedRoute?.driver ?? null}
+              routePath={routePathForMap}
+              busStops={selectedRoute?.route.busStops}
+            />
+          </CardContent>
+        </Card>
+        {selectedRoute && (
+             <Card className="shadow-lg mt-8 animate-in fade-in">
              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Bus className="text-primary"/> Trip Estimate</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Route className="text-primary"/> Trip Estimate</CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted col-span-2">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted col-span-3 sm:col-span-1">
                       <div className="flex items-center gap-2">
                           <Clock className="text-muted-foreground" />
-                          <span className="font-medium">Estimated Time</span>
+                          <span className="font-medium">ETA</span>
                       </div>
-                      <span className="font-bold text-primary">{result.etaMinutes} min</span>
+                      <span className="font-bold text-primary">{selectedRoute.route.etaMinutes} min</span>
                   </div>
-                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted col-span-3 sm:col-span-1">
                       <div className="flex items-center gap-2">
                           <Milestone className="text-muted-foreground" />
                           <span className="font-medium">Distance</span>
                       </div>
-                      <span className="font-bold text-primary">{result.distanceKm} km</span>
+                      <span className="font-bold text-primary">{selectedRoute.route.distanceKm} km</span>
                   </div>
-                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted col-span-3 sm:col-span-1">
                       <div className="flex items-center gap-2">
                           <Wind className="text-muted-foreground" />
                           <span className="font-medium">Avg Speed</span>
                       </div>
-                      <span className="font-bold text-primary">{result.avgSpeedKmph} km/h</span>
+                      <span className="font-bold text-primary">{selectedRoute.route.avgSpeedKmph.toFixed(0)} km/h</span>
                   </div>
                 </div>
 
@@ -190,40 +213,15 @@ export default function TrackerPage() {
                   <h4 className="font-semibold my-4 flex items-center gap-2"><MapPin className="text-muted-foreground"/> Major Stops</h4>
                   <div className="border rounded-lg p-2 max-h-40 overflow-y-auto">
                     <ul className="space-y-1">
-                      {result.busStops.map((stop, i) => (
+                      {selectedRoute.route.busStops.map((stop, i) => (
                         <li key={i} className="text-sm p-1 bg-background rounded">{stop.name}</li>
                       ))}
                     </ul>
                   </div>
                 </div>
-
-                <Alert>
-                    <Route className="h-4 w-4" />
-                    <AlertTitle>Route Info</AlertTitle>
-                    <AlertDescription>
-                        {result.routeSummary}
-                    </AlertDescription>
-                </Alert>
              </CardContent>
           </Card>
         )}
-      </div>
-
-      <div className="lg:col-span-2">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><MapIcon className="text-primary"/> Live Bus Location</CardTitle>
-            <CardDescription>Real-time location of the bus on the route.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MapView 
-              drivers={startBus ? [startBus] : []} 
-              selectedDriver={startBus}
-              routePath={routePathForMap}
-              busStops={result?.busStops}
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
