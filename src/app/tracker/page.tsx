@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useCallback } from 'react';
 import { getRouteETA, getActiveDrivers } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -41,7 +41,60 @@ export default function TrackerPage() {
   const [toSearch, setToSearch] = useState('');
   const { toast } = useToast();
 
-  const fetchLiveRoutes = () => {
+  const generateRouteForBus = useCallback(async (driver: Driver) => {
+    try {
+        const fromCity = punjabCities[Math.floor(Math.random() * punjabCities.length)];
+        const toCity = punjabCities.filter(c => c !== fromCity)[Math.floor(Math.random() * (punjabCities.length - 1))];
+
+        const response = await getRouteETA({ from: fromCity, to: toCity });
+
+        if (response.success && response.data) {
+            const liveIndex = Math.floor(response.data.routePath.length / 2);
+            const liveLocation = response.data.routePath[liveIndex];
+
+            const newRoute: ETAResult = { ...response.data, routeSummary: `${fromCity} to ${toCity}` };
+            
+            const liveRoute: LiveRoute = {
+                driver: { ...driver, lastLocation: liveLocation },
+                route: newRoute
+            };
+
+            setAllRoutes(prev => {
+                const existing = prev.find(r => r.driver.id === driver.id);
+                if (existing) {
+                    return prev.map(r => r.driver.id === driver.id ? liveRoute : r);
+                }
+                return [...prev, liveRoute];
+            });
+             setFilteredRoutes(prev => {
+                const existing = prev.find(r => r.driver.id === driver.id);
+                if (existing) {
+                    return prev.map(r => r.driver.id === driver.id ? liveRoute : r);
+                }
+                return [...prev, liveRoute];
+            });
+        } else {
+            throw new Error(response.error || "Failed to generate route");
+        }
+    } catch (e) {
+        console.error("Failed to generate route for driver", driver.id, e);
+        // Add the driver to the list even if route generation fails
+        setAllRoutes(prev => {
+            if (!prev.find(r => r.driver.id === driver.id)) {
+                return [...prev, { driver }];
+            }
+            return prev;
+        });
+        setFilteredRoutes(prev => {
+             if (!prev.find(r => r.driver.id === driver.id)) {
+                return [...prev, { driver }];
+            }
+            return prev;
+        });
+    }
+  }, []);
+
+  const fetchLiveRoutes = useCallback(() => {
     startTransition(async () => {
       setAllRoutes([]);
       setFilteredRoutes([]);
@@ -60,53 +113,20 @@ export default function TrackerPage() {
       const initialLiveRoutes: LiveRoute[] = drivers.map(driver => ({ driver }));
       setAllRoutes(initialLiveRoutes);
       setFilteredRoutes(initialLiveRoutes);
+
       if (initialLiveRoutes.length > 0) {
         setSelectedRoute(initialLiveRoutes[0]);
-        // Eagerly show the first bus, then generate its route
-        generateRouteForBus(initialLiveRoutes[0].driver.id);
       }
       
-      // Generate routes for all buses in the background
-      initialLiveRoutes.forEach(lr => generateRouteForBus(lr.driver.id));
+      // Generate routes for all buses in parallel
+      await Promise.all(drivers.map(driver => generateRouteForBus(driver)));
     });
-  };
+  }, [generateRouteForBus, toast]);
   
-  const generateRouteForBus = async (driverId: string) => {
-    try {
-        const fromCity = punjabCities[Math.floor(Math.random() * punjabCities.length)];
-        const toCity = punjabCities.filter(c => c !== fromCity)[Math.floor(Math.random() * (punjabCities.length - 1))];
-
-        const response = await getRouteETA({ from: fromCity, to: toCity });
-
-        if (response.success && response.data) {
-            const liveIndex = Math.floor(response.data.routePath.length / 2);
-            const liveLocation = response.data.routePath[liveIndex];
-
-            const newRoute: ETAResult = { ...response.data, routeSummary: `${fromCity} to ${toCity}` };
-
-            setAllRoutes(prev => prev.map(lr => 
-                lr.driver.id === driverId 
-                ? { ...lr, route: newRoute, driver: { ...lr.driver, lastLocation: liveLocation } } 
-                : lr
-            ));
-             setFilteredRoutes(prev => prev.map(lr => 
-                lr.driver.id === driverId 
-                ? { ...lr, route: newRoute, driver: { ...lr.driver, lastLocation: liveLocation } } 
-                : lr
-            ));
-        } else {
-            throw new Error(response.error || "Failed to generate route");
-        }
-    } catch (e) {
-        console.error("Failed to generate route for driver", driverId, e);
-        // The bus remains in the list, just without a route.
-    }
-  }
-
 
   useEffect(() => {
     fetchLiveRoutes();
-  }, []);
+  }, [fetchLiveRoutes]);
   
   useEffect(() => {
     // If the selected route is updated in the main list, update the selected state as well
@@ -115,15 +135,15 @@ export default function TrackerPage() {
         if (updatedSelected) {
             setSelectedRoute(updatedSelected);
         }
+    } else if (filteredRoutes.length > 0) {
+        setSelectedRoute(filteredRoutes[0]);
+    } else if (allRoutes.length > 0) {
+        setSelectedRoute(allRoutes[0]);
     }
-  }, [allRoutes, selectedRoute?.driver.id]);
+  }, [allRoutes, filteredRoutes, selectedRoute?.driver.id]);
   
   const handleSelectRoute = (liveRoute: LiveRoute) => {
     setSelectedRoute(liveRoute);
-    if (!liveRoute.route) {
-        // If route hasn't been generated yet, trigger it now.
-        generateRouteForBus(liveRoute.driver.id);
-    }
   }
 
   const handleSearch = () => {
@@ -362,5 +382,3 @@ export default function TrackerPage() {
     </div>
   );
 }
-
-    
