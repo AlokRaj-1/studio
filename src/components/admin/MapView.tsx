@@ -20,7 +20,7 @@ const osmProvider = (x: number, y: number, z: number): string => {
 };
 
 function RouteOverlay({ routePath, mapState }: { routePath: Point[], mapState: any }) {
-    if (!routePath || routePath.length < 2 || !mapState.width || !mapState.height) return null;
+    if (!routePath || routePath.length < 2 || !mapState.width || !mapState.height || !mapState.latLngToPixel) return null;
 
     const pathPoints = routePath.map(p => mapState.latLngToPixel(p)).filter(p => p);
 
