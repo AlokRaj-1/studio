@@ -22,7 +22,7 @@ const osmProvider = (x: number, y: number, z: number): string => {
 function RouteOverlay({ routePath, mapState }: { routePath: Point[], mapState: any }) {
     if (!routePath || routePath.length < 2 || !mapState.width || !mapState.height || !mapState.latLngToPixel) return null;
 
-    const pathPoints = routePath.map(p => mapState.latLngToPixel(p)).filter(p => p);
+    const pathPoints = routePath.map(p => mapState.latLngToPixel(p)).filter(Boolean);
 
     if (pathPoints.length < 2) return null;
 
@@ -52,13 +52,13 @@ const getZoom = (bounds: ReturnType<typeof getBounds>, mapDimensions: { width: n
   const WORLD_DIM = { height: 256, width: 256 };
   const ZOOM_MAX = 21;
 
-  const latRad = (lat: number) => {
+  function latRad(lat: number) {
     const sin = Math.sin(lat * Math.PI / 180);
     const radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
     return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
   }
 
-  const zoom = (mapPx: number, worldPx: number, fraction: number) => {
+  function zoom(mapPx: number, worldPx: number, fraction: number) {
     return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
   }
 
@@ -81,24 +81,37 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
   const [mapState, setMapState] = useState<any>({ width: 0, height: 0, latLngToPixel: () => [0,0] });
 
   useEffect(() => {
-    if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
-      setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
-      setZoom(13);
-    } else if (routePath && routePath.length > 0) {
+    // This effect runs when the map needs to be updated due to external prop changes
+    if (routePath && routePath.length > 0) {
         if (mapState.width > 0 && mapState.height > 0) {
             const bounds = getBounds(routePath);
             const newZoom = getZoom(bounds, { width: mapState.width, height: mapState.height });
             const newCenter: Point = [(bounds.minLat + bounds.maxLat) / 2, (bounds.minLng + bounds.maxLng) / 2];
-
-            setCenter(newCenter);
-            setZoom(newZoom);
+            
+            if (newCenter[0] !== center[0] || newCenter[1] !== center[1] || newZoom !== zoom) {
+                setCenter(newCenter);
+                setZoom(newZoom);
+            }
         }
+    } else if (selectedDriver && selectedDriver.lastLocation.lat !== 0) {
+      if (center[0] !== selectedDriver.lastLocation.lat || center[1] !== selectedDriver.lastLocation.lng) {
+        setCenter([selectedDriver.lastLocation.lat, selectedDriver.lastLocation.lng]);
+        setZoom(13);
+      }
     } else {
-      // If no driver is selected or driver has no location, reset to India view
+      // Default view if no route or selected driver
       setCenter([20.5937, 78.9629]);
       setZoom(5);
     }
   }, [selectedDriver, routePath, mapState.width, mapState.height]);
+
+  const handleMapChange = (state: any) => {
+    if (state) {
+      setCenter(state.center);
+      setZoom(state.zoom);
+      setMapState(state);
+    }
+  };
 
   return (
     <div className="h-[70vh] w-full rounded-lg overflow-hidden border relative z-0">
@@ -106,20 +119,8 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
         provider={osmProvider}
         center={center}
         zoom={zoom}
-        onBoundsChanged={(state) => {
-          if (state) {
-            setCenter(state.center);
-            setZoom(state.zoom);
-            setMapState(state);
-          }
-        }}
-         onAnimationStop={(state) => {
-            if (state) {
-                setCenter(state.center);
-                setZoom(state.zoom);
-                setMapState(state);
-            }
-        }}
+        onBoundsChanged={handleMapChange}
+        onAnimationStop={handleMapChange}
         metaWheelZoom={true}
       >
         <RouteOverlay routePath={routePath || []} mapState={mapState} />
@@ -130,7 +131,6 @@ export function MapView({ drivers, selectedDriver, routePath, busStops }: MapVie
               width={20}
               anchor={[stop.lat, stop.lng]}
               color={'hsl(var(--secondary-foreground))'}
-              payload={stop.name}
             >
                 <MapPin className="w-5 h-5"/>
             </Marker>

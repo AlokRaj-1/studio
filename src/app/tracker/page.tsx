@@ -37,7 +37,7 @@ type ETAResult = {
   routeSummary: string;
   avgSpeedKmph: number;
   busStops: BusStop[];
-  routePath: Point[];
+  routePath: { lat: number, lng: number }[];
 }
 
 export default function TrackerPage() {
@@ -58,19 +58,14 @@ export default function TrackerPage() {
     setResult(null);
     try {
       const response = await getRouteETA(values);
-      if (response.error) {
+      if (response.error || !response.data) {
         toast({
           variant: "destructive",
           title: "Calculation Failed",
-          description: response.error,
+          description: response.error || "Could not retrieve route data.",
         });
       } else {
-        const transformedData = {
-          ...response.data,
-          routePath: response.data.routePath.map((p: {lat: number, lng: number}) => [p.lat, p.lng]) as Point[],
-          busStops: response.data.busStops.map((bs: BusStop) => ({...bs}))
-        };
-        setResult(transformedData);
+        setResult(response.data);
       }
     } catch (error) {
       toast({
@@ -82,6 +77,17 @@ export default function TrackerPage() {
       setIsLoading(false);
     }
   }
+
+  const routePathForMap = result?.routePath ? result.routePath.map(p => [p.lat, p.lng] as Point) : undefined;
+  
+  const startBus: Driver | null = result?.routePath?.[0] ? {
+      id: 'live-bus',
+      name: 'Your Bus',
+      avatar: { id: 'bus', imageUrl: '', imageHint: 'bus icon', description: 'Live bus' },
+      lastLocation: result.routePath[0],
+      status: 'online',
+      lastSeen: new Date().toISOString(),
+  } : null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -211,9 +217,9 @@ export default function TrackerPage() {
           </CardHeader>
           <CardContent>
             <MapView 
-              drivers={[]} 
-              selectedDriver={null}
-              routePath={result?.routePath}
+              drivers={startBus ? [startBus] : []} 
+              selectedDriver={startBus}
+              routePath={routePathForMap}
               busStops={result?.busStops}
             />
           </CardContent>
