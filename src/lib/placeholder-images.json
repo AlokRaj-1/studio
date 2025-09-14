@@ -65,6 +65,60 @@
       "description": "Avatar for Sanjay Patel",
       "imageUrl": "https://picsum.photos/seed/121/100/100",
       "imageHint": "man portrait"
+    },
+    {
+      "id": "driver-12",
+      "description": "Avatar for Rajesh Singh",
+      "imageUrl": "https://picsum.photos/seed/122/100/100",
+      "imageHint": "man with glasses"
+    },
+    {
+      "id": "driver-13",
+      "description": "Avatar for Sunita Devi",
+      "imageUrl": "https://picsum.photos/seed/123/100/100",
+      "imageHint": "woman in sari"
+    },
+    {
+      "id": "driver-14",
+      "description": "Avatar for Deepak Kumar",
+      "imageUrl": "https://picsum.photos/seed/124/100/100",
+      "imageHint": "young man"
+    },
+    {
+      "id": "driver-15",
+      "description": "Avatar for Aisha Khan",
+      "imageUrl": "https://picsum.photos/seed/125/100/100",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "driver-16",
+      "description": "Avatar for Amit Sharma",
+      "imageUrl": "https://picsum.photos/seed/126/100/100",
+      "imageHint": "man smiling"
+    },
+    {
+      "id": "driver-17",
+      "description": "Avatar for Geeta Singh",
+      "imageUrl": "https://picsum.photos/seed/127/100/100",
+      "imageHint": "woman with scarf"
+    },
+    {
+      "id": "driver-18",
+      "description": "Avatar for Manoj Tiwari",
+      "imageUrl": "https://picsum.photos/seed/128/100/100",
+      "imageHint": "man in turban"
+    },
+    {
+      "id": "driver-19",
+      "description": "Avatar for Fatima Ali",
+      "imageUrl": "https://picsum.photos/seed/129/100/100",
+      "imageHint": "young woman"
+    },
+    {
+      "id": "driver-20",
+      "description": "Avatar for Alok Nath",
+      "imageUrl": "https://picsum.photos/seed/130/100/100",
+      "imageHint": "older man"
     }
   ]
 }
