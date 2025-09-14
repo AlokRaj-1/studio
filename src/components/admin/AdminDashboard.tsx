@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler, ArrowRightLeft, LogOut } from 'lucide-react';
+import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler, ArrowRightLeft, LogOut, Pin } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -34,6 +35,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapView } from './MapView';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const db = getFirestore(app);
 
@@ -50,11 +52,6 @@ export function AdminDashboard() {
 
 
   useEffect(() => {
-    if (!db) {
-      setDrivers([]);
-      setLoading(false);
-      return;
-    }
     const q = query(collection(db, 'drivers'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const driversData: Driver[] = [];
@@ -108,6 +105,11 @@ export function AdminDashboard() {
     router.push('/admin/login');
   };
 
+  const findDriverOnMap = (driver: Driver) => {
+    setSelectedDriver(driver);
+    handleTabChange('map');
+  };
+
   return (
     <SidebarProvider>
       <Sidebar side="left" collapsible="icon">
@@ -136,11 +138,12 @@ export function AdminDashboard() {
           <SidebarMenu>
             {loading && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full mb-1" />)}
             {!loading && filteredDrivers.map(driver => (
-              <SidebarMenuItem key={driver.id}>
+              <SidebarMenuItem key={driver.id} className="relative">
                 <SidebarMenuButton
                   onClick={() => setSelectedDriver(driver)}
                   isActive={selectedDriver?.id === driver.id}
                   tooltip={driver.name}
+                  className="pr-10"
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={driver.avatar.imageUrl} alt={driver.name} data-ai-hint={driver.avatar.imageHint} />
@@ -157,6 +160,22 @@ export function AdminDashboard() {
                       driver.status === 'inactive' && 'bg-red-500'
                   )}></Badge>
                 </SidebarMenuButton>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                            onClick={() => findDriverOnMap(driver)}
+                        >
+                            <Pin className="h-4 w-4" />
+                            <span className="sr-only">Find on map</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                        <p>Find on map</p>
+                    </TooltipContent>
+                 </Tooltip>
               </SidebarMenuItem>
             ))}
              {!loading && drivers.length === 0 && (
