@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler, ArrowRightLeft, LogOut, Pin } from 'lucide-react';
+import { Bot, List, Map as MapIcon, Search, X, PlusCircle, Database, PencilRuler, ArrowRightLeft, LogOut, Pin, Home } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -124,12 +124,12 @@ export function AdminDashboard() {
       <Sidebar side="left" collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-between p-2">
-            <div className='flex items-center gap-2'>
+             <Link href="/" className='flex items-center gap-2 hover:no-underline'>
                 <div className="bg-primary p-2 rounded-lg">
                 <List className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <h1 className="text-xl font-bold">BharatSwift</h1>
-            </div>
+            </Link>
             <CreateDriverDialog onDriverCreated={handleDriverCreated} />
           </div>
           <div className="relative">
