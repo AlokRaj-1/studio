@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, MapPin, Play, Square, LoaderCircle } from 'lucide-react';
+import { LogOut, MapPin, Play, Square, LoaderCircle, Home } from 'lucide-react';
 import { type Driver } from '@/lib/data';
 import { app } from '@/lib/firebase';
 import { getFirestore, doc, updateDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+import Link from 'next/link';
 
 const db = getFirestore(app);
 
@@ -160,6 +161,11 @@ export function DriverInterface({ driver, onLogout }: DriverInterfaceProps) {
         </Button>
       </CardContent>
       <CardFooter className="flex-col gap-2">
+        <Button asChild variant="ghost" className="w-full text-muted-foreground">
+            <Link href="/">
+                <Home className="mr-2 h-4 w-4" /> Go to Home
+            </Link>
+        </Button>
         <Button onClick={onLogout} variant="ghost" className="w-full text-muted-foreground">
           <LogOut className="mr-2 h-4 w-4" /> Logout
         </Button>
