@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth.tsx';
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();

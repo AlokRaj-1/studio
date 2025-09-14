@@ -35,7 +35,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapView } from './MapView';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { signOutUser, useAuth } from '@/lib/auth';
+import { signOutUser, useAuth } from '@/lib/auth.tsx';
 import { toast } from '@/hooks/use-toast';
 
 const db = getFirestore(app);

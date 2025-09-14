@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { KeyRound, LogIn, Mail, UserPlus } from 'lucide-react';
 import Link from 'next/link';
-import { signInWithEmail, getFirebaseAuthErrorMessage } from '@/lib/auth';
+import { signInWithEmail, getFirebaseAuthErrorMessage } from '@/lib/auth.tsx';
 import { LoaderCircle } from 'lucide-react';
 
 export default function AdminLoginPage() {
