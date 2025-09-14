@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { AdminAuthWrapper } from '@/components/admin/AdminAuthWrapper';
-import { AuthProvider } from '@/lib/auth';
+import { AuthProvider } from '@/lib/auth.tsx';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
