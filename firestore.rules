@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Allow anyone to read and write to the 'drivers' collection for now.
+    // For a production application, you should tighten these rules to
+    // only allow authenticated users to perform specific actions.
+    match /drivers/{driverId} {
+      allow read, write: if true;
+    }
+    
+    // Add other rules for your application here.
+    // For example, you might have a 'users' collection:
+    // match /users/{userId} {
+    //   allow read, write: if request.auth.uid == userId;
+    // }
+  }
+}

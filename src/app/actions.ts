@@ -112,8 +112,11 @@ export async function editDriverLocation(data: z.infer<typeof locationEditorForm
 
     return { success: true, data: { ...locationResult, driverId } };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in editDriverLocation:', error);
+    if (error.code === 'permission-denied') {
+        return { error: 'Permission denied. Make sure your Firestore security rules allow writes to the drivers collection.' };
+    }
     return { error: 'An unexpected error occurred while updating the location.' };
   }
 }
