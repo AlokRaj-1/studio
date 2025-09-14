@@ -59,38 +59,13 @@ export default function TrackerPage() {
                 route: newRoute
             };
 
-            setAllRoutes(prev => {
-                const existing = prev.find(r => r.driver.id === driver.id);
-                if (existing) {
-                    return prev.map(r => r.driver.id === driver.id ? liveRoute : r);
-                }
-                return [...prev, liveRoute];
-            });
-             setFilteredRoutes(prev => {
-                const existing = prev.find(r => r.driver.id === driver.id);
-                if (existing) {
-                    return prev.map(r => r.driver.id === driver.id ? liveRoute : r);
-                }
-                return [...prev, liveRoute];
-            });
+            setAllRoutes(prev => prev.map(r => r.driver.id === driver.id ? liveRoute : r));
+            setFilteredRoutes(prev => prev.map(r => r.driver.id === driver.id ? liveRoute : r));
         } else {
             throw new Error(response.error || "Failed to generate route");
         }
     } catch (e) {
         console.error("Failed to generate route for driver", driver.id, e);
-        // Add the driver to the list even if route generation fails
-        setAllRoutes(prev => {
-            if (!prev.find(r => r.driver.id === driver.id)) {
-                return [...prev, { driver }];
-            }
-            return prev;
-        });
-        setFilteredRoutes(prev => {
-             if (!prev.find(r => r.driver.id === driver.id)) {
-                return [...prev, { driver }];
-            }
-            return prev;
-        });
     }
   }, []);
 
@@ -118,8 +93,8 @@ export default function TrackerPage() {
         setSelectedRoute(initialLiveRoutes[0]);
       }
       
-      // Generate routes for all buses in parallel
-      await Promise.all(drivers.map(driver => generateRouteForBus(driver)));
+      // Generate routes for all buses in parallel without blocking the UI
+      drivers.forEach(driver => generateRouteForBus(driver));
     });
   }, [generateRouteForBus, toast]);
   
